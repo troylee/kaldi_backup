@@ -4,11 +4,10 @@ This repo was initially forked from the <a href="http://kaldi.sourceforge.net/">
 
 The focus of this version would be the noise robustness in speech recognition and especially for the deep neural network based ASR systems. 
 
-# Highlights
+### Highlights
 
 
-# TODOs:
-
+### TODOs:
 * VTS-GMM
 * VTS-MVN for DNN
 * Spectral Masking
