@@ -1,0 +1,16 @@
+{
+	"folders":
+	[
+		{
+			"path": "../src"
+		}
+	],
+
+	"settings":
+	{
+		"sublimeclang_options":
+	  [
+	  	"-I../src"
+	  ]
+	}
+}

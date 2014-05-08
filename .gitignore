@@ -33,6 +33,7 @@ tools/sph2pipe_v2.5/
 
 # /src/
 /src/kaldi.mk*
+/src/kaldi.sublime-workspace
 
 # /src/base/
 /src/base/.depend.mk
@@ -117,6 +118,7 @@ tools/sph2pipe_v2.5/
 /src/bin/tree-info
 /src/bin/vector-scale
 /src/bin/vector-sum
+/src/bin/matrix-sum-rows
 
 # /src/cudamatrix/
 /src/cudamatrix/.depend.mk
@@ -175,6 +177,7 @@ tools/sph2pipe_v2.5/
 /src/featbin/select-feats
 /src/featbin/subsample-feats
 /src/featbin/wav-to-duration
+/src/featbin/wav-copy
 
 # /src/fgmmbin/
 /src/fgmmbin/.depend.mk
@@ -331,11 +334,18 @@ tools/sph2pipe_v2.5/
 /src/gmmbin/gmm-global-init-from-feats
 /src/gmmbin/gmm-latgen-faster-parallel
 /src/gmmbin/gmm-latgen-tracking
+/src/gmmbin/gmm-acc-mllt-global
+/src/gmmbin/gmm-est-fmllr-global
+/src/gmmbin/gmm-latgen-faster-regtree-fmllr
+/src/gmmbin/gmm-transform-means-global
 
 # /src/hmm/
 /src/hmm/.depend.mk
 /src/hmm/hmm-topology-test
 /src/hmm/hmm-utils-test
+
+# /src/ivector
+/src/ivector/.depend.mk
 
 # /src/ivectorbin/
 /src/ivectorbin/.depend.mk
@@ -356,6 +366,10 @@ tools/sph2pipe_v2.5/
 /src/ivectorbin/ivector-subtract-global-mean
 /src/ivectorbin/ivector-transform
 /src/ivectorbin/select-voiced-frames
+/src/ivectorbin/create-split-from-vad
+/src/ivectorbin/logistic-regression-copy
+/src/ivectorbin/logistic-regression-eval
+/src/ivectorbin/logistic-regression-train
 
 # /src/kwsbin/
 /src/kwsbin/.depend.mk
@@ -524,6 +538,10 @@ tools/sph2pipe_v2.5/
 /src/nnet2bin/nnet-train-transitions
 /src/nnet2bin/raw-nnet-concat
 /src/nnet2bin/raw-nnet-info
+/src/nnet2bin/cuda-compiled
+/src/nnet2bin/nnet-adjust-priors
+/src/nnet2bin/nnet-replace-last-layers
+/src/nnet2bin/nnet-to-raw-nnet
 
 # /src/sgmm/
 /src/sgmm/.depend.mk
