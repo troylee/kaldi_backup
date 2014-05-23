@@ -15,6 +15,11 @@
 *.la
 *.a
 
+# /egs/
+egs/aurora4/m00/data/
+egs/aurora4/m00/exp/
+egs/aurora4/m00/log/
+
 # /tools/
 tools/ATLAS/
 tools/atlas3.10.0.tar.bz2
