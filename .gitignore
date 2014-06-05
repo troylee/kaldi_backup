@@ -19,6 +19,12 @@
 egs/aurora4/m00/data/
 egs/aurora4/m00/exp/
 egs/aurora4/m00/log/
+egs/aurora4/n00/data/
+egs/aurora4/n00/feat/
+egs/aurora4/n00/exp/
+egs/aurora4/n00/exp_multi/
+egs/aurora4/n00/exp_clean/
+egs/aurora4/n00/log/
 
 # /tools/
 tools/ATLAS/
