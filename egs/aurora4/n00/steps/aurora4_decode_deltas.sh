@@ -67,7 +67,7 @@ if [ -z "$model" ]; then # if --model <mdl> was not specified on the command lin
   else model=$srcdir/$iter.mdl; fi
 fi
 
-for f in $sdata/1/feats.scp $sdata/1/cmvn.scp $model $graphdir/HCLG.fst; do
+for f in $sdata/1/feats.scp $sdata/1/cmvn_0_d_a.utt.scp $model $graphdir/HCLG.fst; do
   [ ! -f $f ] && echo "decode.sh: no such file $f" && exit 1;
 done
 

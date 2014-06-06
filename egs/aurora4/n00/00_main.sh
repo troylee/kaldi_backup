@@ -35,7 +35,7 @@ aurora4=/media/research/corpus/aurora4
 #we need lm, trans, from WSJ0 CORPUS
 wsj0=/media/research/corpus/WSJ0
 
-pre(){
+prepare_basic(){
 log_start "data preparation"
 local/aurora4_prep_data.sh $aurora4 $wsj0
 log_end "data preparation"
@@ -84,7 +84,39 @@ log_end "FBank extraction"
 }
 
 ###########################################
-# Model training
+# Model training - clean
+#
+
+# Note: the --boost-silence option should probably be omitted by default
+# for normal setups.  It doesn't always help. [it's to discourage non-silence
+# models from modeling silence.]
+
+log_start "mono [train]"
+steps/aurora4_train_mono.sh --boost-silence 1.25 --nj 4 --norm_vars true \
+  feat/mfcc/train_clean data/lang exp_clean/mono || exit 1;
+log_end "mono [train]"
+
+log_start "mono [align]"
+steps/aurora4_align_si.sh --boost-silence 1.25 --nj 4  \
+   feat/mfcc/train_clean data/lang exp_clean/mono exp_clean/mono_ali || exit 1;
+log_end "mono [align]"
+
+log_start "tri1a [train]"
+steps/aurora4_train_deltas.sh --boost-silence 1.25 --norm_vars true \
+    4200 35000 feat/mfcc/train_clean data/lang exp_clean/mono_ali exp_clean/tri1a || exit 1;
+log_end "tri1a [train]"
+
+log_start "tri1a [decode]"
+utils/mkgraph.sh data/lang_bcb05cnp exp_clean/tri1a exp_clean/tri1a/graph_bg || exit 1;
+for x in test{01..14} ; do
+  steps/aurora4_decode_deltas.sh --nj 4 exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode_bg_${x} || exit 1;
+done
+log_end "tri1a [decode]"
+
+
+multi_train(){
+###########################################
+# Model training - multi
 #
 
 # Note: the --boost-silence option should probably be omitted by default
@@ -103,13 +135,14 @@ log_end "mono [align]"
 
 log_start "tri1a [train]"
 steps/aurora4_train_deltas.sh --boost-silence 1.25 --norm_vars true \
-    4200 35000 data/mfcc/train_multi data/lang exp_multi/mono_ali exp_multi/tri1a || exit 1;
+    4200 35000 feat/mfcc/train_multi data/lang exp_multi/mono_ali exp_multi/tri1a || exit 1;
 log_end "tri1a [train]"
 
 log_start "tri1a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri1a exp_multi/tri1a/graph_bg || exit 1;
+
 for x in test{01..14} ; do
   steps/aurora4_decode_deltas.sh --nj 4 exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode_bg_${x} || exit 1;
 done
 log_end "tri1a [decode]"
-
+}
