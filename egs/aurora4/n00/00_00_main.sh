@@ -83,6 +83,7 @@ done
 log_end "FBank extraction"
 }
 
+clean_train(){
 ###########################################
 # Model training - clean
 #
@@ -112,7 +113,7 @@ for x in test{01..14} ; do
   steps/aurora4_decode_deltas.sh --nj 4 exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode_bg_${x} || exit 1;
 done
 log_end "tri1a [decode]"
-
+}
 
 multi_train(){
 ###########################################
@@ -145,4 +146,33 @@ for x in test{01..14} ; do
   steps/aurora4_decode_deltas.sh --nj 4 exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode_bg_${x} || exit 1;
 done
 log_end "tri1a [decode]"
+
+# align multi-style data with multi-trained model, needs a larger beam
+log_start "tri1a [align-train-multi]"
+steps/aurora4_align_si.sh --nj 4 --retry-beam 60 feat/mfcc/train_multi data/lang exp_multi/tri1a exp_multi/tri1a_ali/train_multi || exit 1;
+log_end "tri1a [align-train-multi]"
+
+log_start "tri1a [align-dev-multi]"
+steps/aurora4_align_si.sh --nj 4 --retry-beam 80 feat/mfcc/dev_multi data/lang exp_multi/tri1a exp_multi/tri1a_ali/dev_multi || exit 1;
+log_end "tri1a [align-dev-multi]"
+
+# align clean data with multi-trained model
+log_start "tri1a [align-train-clean]"
+steps/aurora4_align_si.sh --nj 4 feat/mfcc/train_clean data/lang exp_multi/tri1a exp_multi/tri1a_ali/train_clean || exit 1;
+log_end "tri1a [align-train-clean]"
+
+log_start "tri1a [align-dev-clean]"
+steps/aurora4_align_si.sh --nj 4 feat/mfcc/dev_clean data/lang exp_multi/tri1a exp_multi/tri1a_ali/dev_clean || exit 1;
+log_end "tri1a [align-dev-clean]"
 }
+
+###############################################
+#Now begin train DNN systems on multi data
+
+#RBM pretrain
+log_start "tri2a [pretrain]"
+dir=exp_multi/tri2a_dnn_pretrain
+mkdir -p $dir/log
+steps/aurora4_pretrain_dbn.sh --nn-depth 7 --rbm-iter 3 --norm-vars true feat/fbank/train_multi $dir
+log_end "tri2a [pretrain]"
+
