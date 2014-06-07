@@ -103,9 +103,6 @@ cat $data/feats.scp | utils/shuffle_list.pl --srand ${seed:-777} > $dir/train.sc
 # print the list size
 wc -l $dir/train.scp
 
-#create a 10k utt subset for global cmvn estimates
-head -n 10000 $dir/train.scp > $dir/train.scp.10k
-
 ###### PREPARE FEATURE PIPELINE ######
 
 #prepare features, add delta
@@ -138,6 +135,8 @@ echo $feat_dim
 if [ ! -z "$feature_transform" ]; then
   echo Using already prepared feature_transform: $feature_transform
   cp $feature_transform $dir/final.feature_transform
+  # transform the features
+  feats="${feats} ${feature_transform} ark:- ark:- |"
 fi
 
 ###### GET THE DIMENSIONS ######
@@ -165,7 +164,6 @@ for depth in $(seq 1 $nn_depth); do
     echo "Pretraining '$RBM' (reduced lrate and 2x more iters)"
     rbm-train-cd1-frmshuff --learn-rate=$rbm_lrate_low --l2-penalty=$rbm_l2penalty \
       --num-iters=$((2*$rbm_iter)) --drop-data=$rbm_drop_data --verbose=$verbose \
-      --feature-transform=$feature_transform \
       $rbm_extra_opts \
       $RBM.init "$feats" $RBM 2>$dir/log/rbm.$depth.log || exit 1
   else
@@ -173,10 +171,8 @@ for depth in $(seq 1 $nn_depth); do
     #cmvn stats for init
     echo "Computing cmvn stats '$dir/$depth.cmvn' for RBM initialization"
     if [ ! -f $dir/$depth.cmvn ]; then 
-      nnet-forward --use-gpu=yes \
-       "nnet-concat $feature_transform $dir/$((depth-1)).dbn - |" \
-        "$(echo $feats | sed 's|train.scp|train.scp.10k|')" \
-        ark:- 2>$dir/log/cmvn_fwd.$depth.log | \
+      nnet-forward --use-gpu=yes $dir/$((depth-1)).dbn \
+        "${feats}" ark:- 2>$dir/log/cmvn_fwd.$depth.log | \
       compute-cmvn-stats ark:- - 2>$dir/log/cmvn.$depth.log | \
       cmvn-to-nnet - $dir/$depth.cmvn || exit 1
     else
@@ -193,7 +189,7 @@ for depth in $(seq 1 $nn_depth); do
     echo "Pretraining '$RBM'"
     rbm-train-cd1-frmshuff --learn-rate=$rbm_lrate --l2-penalty=$rbm_l2penalty \
       --num-iters=$rbm_iter --drop-data=$rbm_drop_data --verbose=$verbose \
-      --feature-transform="nnet-concat $feature_transform $dir/$((depth-1)).dbn - |" \
+      --feature-transform=$dir/$((depth-1)).dbn \
       $rbm_extra_opts \
       $RBM.init "$feats" $RBM 2>$dir/log/rbm.$depth.log || exit 1
   fi

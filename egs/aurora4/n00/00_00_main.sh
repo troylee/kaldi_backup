@@ -164,6 +164,25 @@ log_end "tri1a [align-train-clean]"
 log_start "tri1a [align-dev-clean]"
 steps/aurora4_align_si.sh --nj 4 feat/mfcc/dev_clean data/lang exp_multi/tri1a exp_multi/tri1a_ali/dev_clean || exit 1;
 log_end "tri1a [align-dev-clean]"
+
+# additional processing of the clean data alignments for used as multi labels
+dir=exp_multi/tri1a_ali/train_clean
+mkdir -p ${dir}/ori
+for j in {1..4}; do 
+  mv ${dir}/ali.${j}.gz ${dir}/ori/ali.${j}.gz
+  utils/convert_ali_names.py feat/mfcc/train_multi/feats.scp ${dir}/ori/ali.${j}.gz ${dir}/ali.${j}.gz
+done
+
+dir=exp_multi/tri1a_ali/dev_clean
+mkdir -p ${dir}/ori
+for j in {1..4}; do 
+  mv ${dir}/ali.${j}.gz ${dir}/ori/ali.${j}.gz
+  utils/convert_ali_names.py feat/mfcc/dev_multi/feats.scp ${dir}/ori/ali.${j}.gz ${dir}/ali.${j}.gz
+done
+
+# sanity check for the genreated clean frame alignment
+./utils/alignment_frame_checking.sh exp_multi/tri1a_ali/train_clean/ exp_multi/tri1a_ali/train_multi/
+./utils/alignment_frame_checking.sh exp_multi/tri1a_ali/dev_clean/ exp_multi/tri1a_ali/dev_multi/
 }
 
 ###############################################
@@ -175,4 +194,3 @@ dir=exp_multi/tri2a_dnn_pretrain
 mkdir -p $dir/log
 steps/aurora4_pretrain_dbn.sh --nn-depth 7 --rbm-iter 3 --norm-vars true feat/fbank/train_multi $dir
 log_end "tri2a [pretrain]"
-
