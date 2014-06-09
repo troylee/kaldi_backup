@@ -110,9 +110,9 @@ feats="ark:add-deltas --delta-order=2 --delta-window=3 scp:$dir/train.scp ark:- 
 # do utt-cmvn
 # keep track of norm_vars option
 echo "$norm_vars" >$dir/norm_vars
-cmvn="scp:$data/cmvn_0_d_a.utt.scp"
+cmvn=$data/cmvn_0_d_a.utt.scp
 echo "Will use CMVN statistics : $cmvn"
-feats="${feats} apply-cmvn --print-args=false --norm-vars=$norm_vars $cmvn ark:- ark:- |"
+feats="${feats} apply-cmvn --print-args=false --norm-vars=$norm_vars scp:$cmvn ark:- ark:- |"
 # splicing
 feats="${feats} splice-feats --left-context=${splice} --right-context=${splice} ark:- ark:- |"
 
@@ -136,7 +136,7 @@ if [ ! -z "$feature_transform" ]; then
   echo Using already prepared feature_transform: $feature_transform
   cp $feature_transform $dir/final.feature_transform
   # transform the features
-  feats="${feats} ${feature_transform} ark:- ark:- |"
+  feats="${feats} transform-feats ${feature_transform} ark:- ark:- |"
 fi
 
 ###### GET THE DIMENSIONS ######

@@ -110,8 +110,10 @@ log_end "tri1a [train]"
 log_start "tri1a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_clean/tri1a exp_clean/tri1a/graph_bg || exit 1;
 for x in test{01..14} ; do
-  steps/aurora4_decode_deltas.sh --nj 4 exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode_bg_${x} || exit 1;
+  steps/aurora4_decode_deltas.sh --nj 4 --model exp_clean/tri1a/final.mdl exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x} || exit 1;
 done
+# write out the average WER results
+local/average_wer.sh 'exp_clean/tri1a/decode/decode_bg_test*' | tee exp_clean/tri1a/decode/decode_bg_test.avgwer
 log_end "tri1a [decode]"
 }
 
@@ -143,8 +145,10 @@ log_start "tri1a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri1a exp_multi/tri1a/graph_bg || exit 1;
 
 for x in test{01..14} ; do
-  steps/aurora4_decode_deltas.sh --nj 4 exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode_bg_${x} || exit 1;
+  steps/aurora4_decode_deltas.sh --nj 4 --model exp_multi/tri1a/final.mdl exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x} || exit 1;
 done
+# write out the average WER results
+local/average_wer.sh 'exp_multi/tri1a/decode/decode_bg_test*' | tee exp_multi/tri1a/decode/decode_bg_test.avgwer
 log_end "tri1a [decode]"
 
 # align multi-style data with multi-trained model, needs a larger beam
@@ -183,7 +187,6 @@ done
 # sanity check for the genreated clean frame alignment
 ./utils/alignment_frame_checking.sh exp_multi/tri1a_ali/train_clean/ exp_multi/tri1a_ali/train_multi/
 ./utils/alignment_frame_checking.sh exp_multi/tri1a_ali/dev_clean/ exp_multi/tri1a_ali/dev_multi/
-}
 
 ###############################################
 #Now begin train DNN systems on multi data
@@ -194,3 +197,24 @@ dir=exp_multi/tri2a_dnn_pretrain
 mkdir -p $dir/log
 steps/aurora4_pretrain_dbn.sh --nn-depth 7 --rbm-iter 3 --norm-vars true feat/fbank/train_multi $dir
 log_end "tri2a [pretrain]"
+
+log_start "tri2a [train]"
+dir=exp_multi/tri2a_dnn
+ali=exp_multi/tri1a_ali/train_clean
+ali_dev=exp_multi/tri1a_ali/dev_clean
+dbn=exp_multi/tri2a_dnn_pretrain/7.dbn
+mkdir -p $dir/log
+steps/aurora4_nnet_train.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+log_end "tri2a [train]"
+
+log_start "tri2a [decode]"
+utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg || exit 1;
+}
+
+for x in test{01..14} ; do
+  steps/aurora4_nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg feat/fbank/${x} exp_multi/tri2a_dnn/decode/decode_bg_${x} || exit 1;
+done
+local/average_wer.sh 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a_dnn/decode/decode_bg_test.avgwer
+log_end "tri2a [decode]"
+
