@@ -7,7 +7,7 @@
 cwd=~/tools/kaldi/egs/aurora4/n00
 cd $cwd
 
-nodes=( compg2 compg3 compg4 compg5 compg6 compg7 compg8 )
+nodes=( compg2 compg4 compg5 compg6 compg7 compg8 compg9 )
 
 set -e           #Exit on non-zero return code from any command
 set -o pipefail  #Exit if any of the commands in the pipeline will 
@@ -66,6 +66,7 @@ local/average_wer.sh 'exp_multi/tri1a/decode/decode_bg_test*' | tee exp_multi/tr
 log_end "tri1a [decode]"
 }
 
+decode_multi_tri2a(){
 # decode exp_multi/tri2a_dnn
 log_start "tri2a [decode]"
 for i in {0..6} ; do 
@@ -79,6 +80,24 @@ for i in {0..6} ; do
 done
 wait;
 # write out the average WER results
-local/average_wer.sh 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a/decode_dnn/decode_bg_test.avgwer
+local/average_wer.sh --min-lmwt 9 --max-lmwt 20 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a_dnn/decode/decode_bg_test.avgwer
 log_end "tri2a [decode]"
+}
 
+#decode_multi_tri2b(){
+# decode exp_multi/tri2b_dnn
+log_start "tri2b [decode]"
+for i in {0..6} ; do
+  printf -v x 'test%02g' $((i+1))
+  echo ${nodes[$i]} $x
+  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_nnet_decode.sh --nj 5 --srcdir exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg feat/fbank/${x} exp_multi/tri2b_dnn/decode/decode_bg_${x}" ) &
+
+  printf -v x 'test%02g' $((i+8))
+  echo ${nodes[$i]} $x
+  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_nnet_decode.sh --nj 5 --srcdir exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg feat/fbank/${x} exp_multi/tri2b_dnn/decode/decode_bg_${x}" ) &
+done
+wait;
+# write out the average WER results
+local/average_wer.sh --min-lmwt 9 --max-lmwt 20 'exp_multi/tri2b_dnn/decode/decode_bg_test*' | tee exp_multi/tri2b_dnn/decode/decode_bg_test.avgwer
+log_end "tri2b [decode]"
+#}
