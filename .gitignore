@@ -1,6 +1,10 @@
 # ignore all svn directories
 .svn/
 
+# ignore eclipse project files
+.cproject
+.project
+
 # Compiled Object files
 *.slo
 *.lo
