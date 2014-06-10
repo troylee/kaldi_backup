@@ -206,7 +206,7 @@ fi
 ###### TRAIN ######
 echo
 echo "# RUNNING THE NN-TRAINING SCHEDULER"
-steps/nnet/train_scheduler.sh \
+steps/nnet_scheduler/train_scheduler_newbob.sh \
   ${feature_transform:+ --feature-transform "$feature_transform"} \
   --learn-rate $learn_rate \
   --randomizer-seed $seed \

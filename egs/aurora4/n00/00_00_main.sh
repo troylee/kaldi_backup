@@ -197,11 +197,13 @@ dir=exp_multi/tri2a_dnn_pretrain
 mkdir -p $dir/log
 steps/aurora4_pretrain_dbn.sh --nn-depth 7 --rbm-iter 3 --norm-vars true feat/fbank/train_multi $dir
 log_end "tri2a [pretrain]"
+}
 
+# DNN fine-tuning with multi-style aligned labels
 log_start "tri2a [train]"
 dir=exp_multi/tri2a_dnn
-ali=exp_multi/tri1a_ali/train_clean
-ali_dev=exp_multi/tri1a_ali/dev_clean
+ali=exp_multi/tri1a_ali/train_multi
+ali_dev=exp_multi/tri1a_ali/dev_multi
 dbn=exp_multi/tri2a_dnn_pretrain/7.dbn
 mkdir -p $dir/log
 steps/aurora4_nnet_train.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
@@ -210,7 +212,6 @@ log_end "tri2a [train]"
 
 log_start "tri2a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg || exit 1;
-}
 
 for x in test{01..14} ; do
   steps/aurora4_nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg feat/fbank/${x} exp_multi/tri2a_dnn/decode/decode_bg_${x} || exit 1;
@@ -218,3 +219,35 @@ done
 local/average_wer.sh 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a_dnn/decode/decode_bg_test.avgwer
 log_end "tri2a [decode]"
 
+post(){
+# DNN fine-tuning with modified scheduler
+log_start "tri2b [train]"
+dir=exp_multi/tri2b_dnn
+ali=exp_multi/tri1a_ali/train_clean
+ali_dev=exp_multi/tri1a_ali/dev_clean
+dbn=exp_multi/tri2a_dnn_pretrain/7.dbn
+mkdir -p $dir/log
+steps/aurora4_nnet_train.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+log_end "tri2b [train]"
+
+log_start "tri2b [decode]"
+utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg || exit 1;
+
+for x in test{01..14} ; do
+  steps/aurora4_nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg feat/fbank/${x} exp_multi/tri2b_dnn/decode/decode_bg_${x} || exit 1;
+done
+local/average_wer.sh 'exp_multi/tri2b_dnn/decode/decode_bg_test*' | tee exp_multi/tri2b_dnn/decode/decode_bg_test.avgwer
+log_end "tri2b [decode]"
+
+# DNN fine-tuning with Dropout
+log_start "tri2c [train]"
+dir=exp_multi/tri2c_dnn
+ali=exp_multi/tri1a_ali/train_clean
+ali_dev=exp_multi/tri1a_ali/dev_clean
+dbn=exp_multi/tri2a_dnn_pretrain/7.dbn
+mkdir -p $dir/log
+steps/aurora4_nnet_train_dropout.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.005 --use-gpu-id 0 \
+  feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+log_end "tri2c [train]"
+}
