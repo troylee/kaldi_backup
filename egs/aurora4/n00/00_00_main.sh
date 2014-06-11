@@ -109,7 +109,9 @@ log_end "tri1a [train]"
 
 log_start "tri1a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_clean/tri1a exp_clean/tri1a/graph_bg || exit 1;
-for x in test{01..14} ; do
+# some system works well will {01..14}, but some will remove the starting 0s.
+for i in `seq -f "%02g" 1 14`; do
+  x=test${i}
   steps/aurora4_decode_deltas.sh --nj 4 --model exp_clean/tri1a/final.mdl exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x} || exit 1;
 done
 # write out the average WER results
@@ -144,7 +146,8 @@ log_end "tri1a [train]"
 log_start "tri1a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri1a exp_multi/tri1a/graph_bg || exit 1;
 
-for x in test{01..14} ; do
+for i in `seq -f "%02g" 1 14`; do
+  x=test${i}
   steps/aurora4_decode_deltas.sh --nj 4 --model exp_multi/tri1a/final.mdl exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x} || exit 1;
 done
 # write out the average WER results
@@ -213,7 +216,8 @@ log_end "tri2a [train]"
 log_start "tri2a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg || exit 1;
 
-for x in test{01..14} ; do
+for i in `seq -f "%02g" 1 14`; do
+  x=test${i}
   steps/aurora4_nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg feat/fbank/${x} exp_multi/tri2a_dnn/decode/decode_bg_${x} || exit 1;
 done
 local/average_wer.sh 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a_dnn/decode/decode_bg_test.avgwer
@@ -234,7 +238,8 @@ log_end "tri2b [train]"
 log_start "tri2b [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg || exit 1;
 
-for x in test{01..14} ; do
+for i in `seq -f "%02g" 1 14`; do
+  x=test${i}
   steps/aurora4_nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg feat/fbank/${x} exp_multi/tri2b_dnn/decode/decode_bg_${x} || exit 1;
 done
 local/average_wer.sh 'exp_multi/tri2b_dnn/decode/decode_bg_test*' | tee exp_multi/tri2b_dnn/decode/decode_bg_test.avgwer
