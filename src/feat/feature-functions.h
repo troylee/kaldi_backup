@@ -48,9 +48,11 @@ struct MelBanksOptions {
   // Enables more exact compatibibility with HTK, for testing purposes.  Affects
   // mel-energy flooring and reproduces a bug in HTK.
   bool htk_mode;
+  bool use_power; // If true, use power spectrogram, else magnitude spectrogram
+
   explicit MelBanksOptions(int num_bins = 25)
       : num_bins(num_bins), low_freq(20), high_freq(0), vtln_low(100),
-        vtln_high(-500), debug_mel(false), htk_mode(false) {}
+        vtln_high(-500), debug_mel(false), htk_mode(false), use_power(true) {}
 
   void Register(OptionsItf *po) {
     po->Register("num-mel-bins", &num_bins,
@@ -66,6 +68,8 @@ struct MelBanksOptions {
                  " (if negative, offset from high-mel-freq");
     po->Register("debug-mel", &debug_mel,
                  "Print out debugging information for mel bin computation");
+    po->Register("use-power", &use_power,
+    			 "If true, use power spectrogram, else magnitude spectrogram.");
   }
 };
 
