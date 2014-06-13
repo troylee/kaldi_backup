@@ -4,14 +4,14 @@ all:
 EXTRA_CXXFLAGS = -Wno-sign-compare
 include ../kaldi.mk
 
-BINFILES = compute-average-noise compute-utt-noise copy-feats-to-matlab \
-					 feats-append-noise kl-divergence-gauss noise-mfc2fbk vts-acc-gmm-stats-ali \
-					 vts-align-compiled vts-apply-global-cmvn vts-apply-global-cmvn-fbank \
-					 vts-compute-likes vts-compute-mono-post vts-compute-obj \
-					 vts-est-global-noise vts-est-noise vts-feats vts-feats-fbank \
-					 vts-global-noise-decode vts-gmm-est vts-gmm-sum-accs \
-					 vts-init-global-noise vts-init-noise vts-model-decode \
-					 vts-noise-decode vts-sum-obj
+BINFILES = compute-average-noise compute-utt-noise \
+           feats-append-noise kl-divergence-gauss noise-mfc2fbk vts-acc-gmm-stats-ali \
+           vts-align-compiled vts-apply-global-cmvn vts-apply-global-cmvn-fbank \
+           vts-compute-likes vts-compute-mono-post vts-compute-obj \
+           vts-est-global-noise vts-est-noise vts-feats vts-feats-fbank \
+           vts-global-noise-decode vts-gmm-est vts-gmm-sum-accs \
+           vts-init-global-noise vts-init-noise vts-model-decode \
+           vts-noise-decode vts-sum-obj
  
 OBJFILES =
 

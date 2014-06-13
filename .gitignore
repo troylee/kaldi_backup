@@ -194,6 +194,7 @@ tools/sph2pipe_v2.5/
 /src/featbin/subsample-feats
 /src/featbin/wav-to-duration
 /src/featbin/wav-copy
+/src/featbin/copy-feats-to-matlab
 
 # /src/fgmmbin/
 /src/fgmmbin/.depend.mk
