@@ -1,10 +1,10 @@
 /*
- * vtsbin/dbnvts-apply-cmvn-fbank.cc
+ * vtsbin/vts-mvn-global-fbank.cc
  *
  *  Created on: Nov 1, 2012
  *      Author: Troy Lee (troy.lee2008@gmail.com)
  *
- *  Apply global CMVN normalization to the feature. The normalization
+ *  Apply global MVN normalization to the feature. The normalization
  *  statistics are got from clean features, we first compensate the
  *  normalization statistics using the noise parameters per utterance,
  *  then use these compensated, utterance specific statistics to normalize
@@ -35,13 +35,12 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Apply per-utterance noise compensated cepstral mean and (optionally) variance normalization\n"
-            "Only global normalization is supported\n"
-            "Usage: vts-global-apply-cmvn-fbank [options] cmvn-stats-rspecifier feats-rspecifier noise-rspecifier feats-wspecifier\n";
+        "Only global normalization is supported\n"
+        "Usage: vts-mvn-global-fbank [options] cmvn-stats-rspecifier feats-rspecifier noise-rspecifier feats-wspecifier\n";
 
     ParseOptions po(usage);
-    bool have_energy = true;
-    po.Register(
-        "have-energy", &have_energy,
+    bool have_energy = false;
+    po.Register("have-energy", &have_energy,
         "Whether the feature has energy term, it will not be compensated");
 
     bool norm_vars = true;
@@ -52,7 +51,7 @@ int main(int argc, char *argv[]) {
                 "Parameter kind of the noise [mfcc|fbank]");
 
     int32 num_cepstral = 13;
-    int32 num_fbank = 40;
+    int32 num_fbank = 26;
     BaseFloat ceplifter = 22;
 
     po.Register("num-cepstral", &num_cepstral, "Number of Cepstral features");

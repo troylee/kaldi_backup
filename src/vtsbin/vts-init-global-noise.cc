@@ -37,10 +37,9 @@ int main(int argc, char* argv[]) {
 
     po.Register("num-static", &num_static,
                 "Dimension of the static feature coefficients");
-    po.Register(
-        "noise-frames",
-        &noise_frames,
-        "Number of frames at the beginning and ending of each sentence used for noise estimation");
+    po.Register("noise-frames", &noise_frames,
+                "Number of frames at the beginning and ending of"
+                " each sentence used for noise estimation");
 
     po.Register("zero-mu-z-deltas", &zero_mu_z_deltas,
                 "Constrain the deltas of additive noise to be 0s.");
@@ -58,7 +57,7 @@ int main(int argc, char* argv[]) {
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     DoubleVectorWriter noiseparams_writer(noiseparams_wspecifier);
 
-    int32 feat_dim = 39;
+    int32 feat_dim = 3 * num_static;
     // noise model parameters, current estimate and last estimate
     Vector<double> mu_h(feat_dim), mu_z(feat_dim), var_z(feat_dim);
     mu_h.SetZero();  // the convolutional noise, initialized to be 0
@@ -75,9 +74,7 @@ int main(int argc, char* argv[]) {
       Matrix<BaseFloat> features(feature_reader.Value());
       feature_reader.FreeCurrent();
 
-      if (g_kaldi_verbose_level >= 1) {
-        KALDI_LOG<< "Current utterance: " << key;
-      }
+      KALDI_VLOG(1)<< "Current utterance: " << key;
 
       if (features.NumRows() == 0) {
         KALDI_WARN<< "Zero-length utterance: " << key;
@@ -86,12 +83,12 @@ int main(int argc, char* argv[]) {
       }
 
       if (features.NumRows() < noise_frames * 2) {
-        KALDI_WARN<< "Too short utterance for VTS: " << key << " ("
-        << features.NumRows() << " frames)";
+        KALDI_WARN<< "Too short utterance for VTS: " << key
+            << " (" << features.NumRows() << " frames)";
       }
 
-      if (features.NumCols() != 39) {
-        KALDI_WARN<< "Current feature dim is not 39!";
+      if (features.NumCols() != 3 * num_static) {
+        KALDI_WARN<< "Current feature dim is not " << 3 * num_static <<" !";
       }
 
         // accumulate the starting stats
@@ -102,8 +99,7 @@ int main(int argc, char* argv[]) {
       tot_frames += i;
       // accumulate the ending stats
       i = features.NumRows() - noise_frames;
-      if (i < 0)
-        i = 0;
+      if (i < 0) i = 0;
       for (; i < features.NumRows(); ++i, ++tot_frames) {
         mu_z.AddVec(1.0, features.Row(i));
         var_z.AddVec2(1.0, features.Row(i));
@@ -119,8 +115,9 @@ int main(int argc, char* argv[]) {
     ///////////////////////////////////////////////////
     // As we assume the additive noise has 0 delta and delta-delta mean
     if (zero_mu_z_deltas) {
-      for (i = num_static; i < feat_dim; ++i)
+      for (i = num_static; i < feat_dim; ++i) {
         mu_z(i) = 0.0;
+      }
     }
 
     // Writting the noise parameters out
@@ -129,7 +126,7 @@ int main(int argc, char* argv[]) {
     noiseparams_writer.Write("global_var_z", var_z);
 
     KALDI_LOG<< "Done " << num_success << " utterances successfully, "
-    << num_fail << " failed.";
+        << num_fail << " failed.";
 
     return 0;
   } catch (const std::exception &e) {

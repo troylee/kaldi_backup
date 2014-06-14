@@ -8,6 +8,7 @@
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
+#include "gmm/mle-am-diag-gmm.h"
 #include "tree/context-dep.h"
 #include "hmm/transition-model.h"
 #include "vts/vts-accum-am-diag-gmm.h"
@@ -25,7 +26,7 @@ int main(int argc, char *argv[]) {
         "e.g.: vts-gmm-est 1.mdl 1.acc 2.mdl\n";
 
     bool binary_write = true;
-    TransitionUpdateConfig tcfg;
+    MleTransitionUpdateConfig tcfg;
     int32 mixup = 0;
     int32 mixdown = 0;
     BaseFloat perturb_factor = 0.01;
@@ -87,7 +88,7 @@ int main(int argc, char *argv[]) {
 
     if (update_flags & kGmmTransitions) {  // Update transition model.
       BaseFloat objf_impr, count;
-      trans_model.Update(transition_accs, tcfg, &objf_impr, &count);
+      trans_model.MleUpdate(transition_accs, tcfg, &objf_impr, &count);
       KALDI_LOG << "Transition model update: average " << (objf_impr/count)
                 << " log-like improvement per frame over " << (count)
                 << " frames.";

@@ -11,10 +11,10 @@
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
+#include "gmm/decodable-am-diag-gmm.h"
 #include "hmm/transition-model.h"
 #include "fstext/fstext-lib.h"
 #include "decoder/faster-decoder.h"
-#include "decoder/decodable-am-diag-gmm.h"
 #include "util/timer.h"
 #include "lat/kaldi-lattice.h" // for CompactLatticeArc
 #include "gmm/diag-gmm-normal.h"
@@ -69,7 +69,6 @@ int main(int argc, char *argv[]) {
     ParseOptions po(usage);
     bool allow_partial = true;
     BaseFloat acoustic_scale = 0.1;
-    int32 noise_frames = 20;
     int32 num_cepstral = 13;
     int32 num_fbank = 26;
     BaseFloat ceplifter = 22;
@@ -77,10 +76,6 @@ int main(int argc, char *argv[]) {
     std::string word_syms_filename;
     FasterDecoderOptions decoder_opts;
     decoder_opts.Register(&po, true);  // true == include obscure settings.
-    po.Register(
-        "noise-frames",
-        &noise_frames,
-        "Number of frames at the begining and ending of each sentence used for noise estimation");
     po.Register("num-cepstral", &num_cepstral, "Number of Cepstral features");
     po.Register("num-fbank", &num_fbank,
                 "Number of FBanks used to generate the Cepstral features");
@@ -99,10 +94,13 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_rxfilename = po.GetArg(1), fst_rxfilename = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3), noiseparams_rspecifier = po.GetArg(
-            4), words_wspecifier = po.GetArg(5), alignment_wspecifier = po
-            .GetOptArg(6), lattice_wspecifier = po.GetOptArg(7);
+    std::string model_rxfilename = po.GetArg(1),
+        fst_rxfilename = po.GetArg(2),
+        feature_rspecifier = po.GetArg(3),
+        noiseparams_rspecifier = po.GetArg(4),
+        words_wspecifier = po.GetArg(5),
+        alignment_wspecifier = po.GetOptArg(6),
+        lattice_wspecifier = po.GetOptArg(7);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -120,10 +118,12 @@ int main(int argc, char *argv[]) {
     CompactLatticeWriter clat_writer(lattice_wspecifier);
 
     fst::SymbolTable *word_syms = NULL;
-    if (word_syms_filename != "")
-      if (!(word_syms = fst::SymbolTable::ReadText(word_syms_filename)))
+    if (word_syms_filename != "") {
+      if (!(word_syms = fst::SymbolTable::ReadText(word_syms_filename))) {
         KALDI_ERR << "Could not read symbol table from file "
             << word_syms_filename;
+      }
+    }
 
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     RandomAccessDoubleVectorReader noiseparams_reader(noiseparams_rspecifier);
@@ -151,9 +151,7 @@ int main(int argc, char *argv[]) {
       Matrix<BaseFloat> features(feature_reader.Value());
       feature_reader.FreeCurrent();
 
-      if (g_kaldi_verbose_level >= 1) {
-        KALDI_LOG << "Current utterance: " << key;
-      }
+      KALDI_VLOG(1) << "Current utterance: " << key;
 
       if (features.NumRows() == 0) {
         KALDI_WARN << "Zero-length utterance: " << key;
@@ -209,13 +207,15 @@ int main(int argc, char *argv[]) {
 
       if ((allow_partial || decoder.ReachedFinal())
           && decoder.GetBestPath(&decoded)) {
-        if (!decoder.ReachedFinal())
+        if (!decoder.ReachedFinal()) {
           KALDI_WARN << "Decoder did not reach end-state, "
               << "outputting partial traceback since --allow-partial=true";
+        }
         num_success++;
-        if (!decoder.ReachedFinal())
+        if (!decoder.ReachedFinal()) {
           KALDI_WARN
               << "Decoder did not reach end-state, outputting partial traceback.";
+        }
         std::vector<int32> alignment;
         std::vector<int32> words;
         LatticeWeight weight;
@@ -228,9 +228,10 @@ int main(int argc, char *argv[]) {
           alignment_writer.Write(key, alignment);
 
         if (lattice_wspecifier != "") {
-          if (acoustic_scale != 0.0)  // We'll write the lattice without acoustic scaling
+          if (acoustic_scale != 0.0) { // We'll write the lattice without acoustic scaling
             fst::ScaleLattice(fst::AcousticLatticeScale(1.0 / acoustic_scale),
                               &decoded);
+          }
           fst::VectorFst<CompactLatticeArc> clat;
           ConvertLattice(decoded, &clat, true);
           clat_writer.Write(key, clat);
@@ -240,8 +241,9 @@ int main(int argc, char *argv[]) {
           std::cerr << key << ' ';
           for (size_t i = 0; i < words.size(); i++) {
             std::string s = word_syms->Find(words[i]);
-            if (s == "")
+            if (s == "") {
               KALDI_ERR << "Word-id " << words[i] << " not in symbol table.";
+            }
             std::cerr << s << ' ';
           }
           std::cerr << '\n';

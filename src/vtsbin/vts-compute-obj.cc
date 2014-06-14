@@ -22,9 +22,9 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Compute the objective value for the current estimation.\n"
-            "Usage:  vts-compute-obj [options] model-in features-rspecifier "
-            "alignments-rspecifier noise-rspecifier obj-stats-wspecifier\n"
-            "Note: Features are MFCC_0_D_A, C0 is the last item.\n";
+        "Usage:  vts-compute-obj [options] model-in features-rspecifier "
+        "alignments-rspecifier noise-rspecifier obj-stats-wspecifier\n"
+        "Note: Features are Kaldi MFCC_0_D_A, C0 is the first item.\n";
     ParseOptions po(usage);
 
     bool binary = true;
@@ -47,9 +47,11 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(
-        2), alignments_rspecifier = po.GetArg(3), noise_in_rspecifier = po
-        .GetArg(4), obj_wxfilename = po.GetArg(5);
+    std::string model_rxfilename = po.GetArg(1),
+        feature_rspecifier = po.GetArg(2),
+        alignments_rspecifier = po.GetArg(3),
+        noise_in_rspecifier = po.GetArg(4),
+        obj_wxfilename = po.GetArg(5);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -76,9 +78,7 @@ int main(int argc, char *argv[]) {
       Matrix<BaseFloat> features(feature_reader.Value());
       feature_reader.FreeCurrent();
 
-      if (g_kaldi_verbose_level >= 1) {
-        KALDI_LOG<< "Current utterance: " << key;
-      }
+      KALDI_VLOG(1)<< "Current utterance: " << key;
 
       if (features.NumRows() == 0) {
         KALDI_WARN<< "Zero-length utterance: " << key;
@@ -87,17 +87,18 @@ int main(int argc, char *argv[]) {
       }
 
       int32 feat_dim = features.NumCols();
-      if (feat_dim != 39) {
-        KALDI_ERR<< "Could not decode the features, only 39D MFCC_0_D_A is supported!";
+      if (feat_dim != 3 * num_cepstral) {
+        KALDI_ERR<< "Could not decode the features, "
+            << 3 * num_cepstral << "D MFCC_0_D_A is expected!";
       }
 
-        /************************************************
-         load alignment
-         *************************************************/
+      /************************************************
+       load alignment
+       *************************************************/
 
       if (!alignments_reader.HasKey(key)) {
-        KALDI_WARN<< "No alignment could be found for " << key
-        << ", utterance ignored.";
+        KALDI_WARN<< "No alignment could be found for "
+            << key << ", utterance ignored.";
         ++num_fail;
         continue;
       }
@@ -105,14 +106,14 @@ int main(int argc, char *argv[]) {
 
       if (alignment.size() != features.NumRows()) {
         KALDI_WARN<< "Alignments has wrong size " << (alignment.size())
-        << " vs. " << (features.NumRows());
+            << " vs. " << (features.NumRows());
         ++num_fail;
         continue;
       }
 
-        /************************************************
-         load parameters for VTS compensation
-         *************************************************/
+      /************************************************
+       load parameters for VTS compensation
+       *************************************************/
 
       if (!noiseparams_reader.HasKey(key + "_mu_h")
           || !noiseparams_reader.HasKey(key + "_mu_z")
@@ -161,12 +162,11 @@ int main(int argc, char *argv[]) {
 
     }
 
-    KALDI_LOG<< "Done " << num_success << " utterances, failed for "
-    << num_fail;
+    KALDI_LOG<< "Done " << num_success << " utterances, failed for " << num_fail;
     KALDI_LOG<< "Overall log-likelihood per file is "
-    << (tot_like / num_success) << " over " << num_success << " files.";
+        << (tot_like / num_success) << " over " << num_success << " files.";
     KALDI_LOG<< "Overall log-likelihood per frame is "
-    << (tot_like / tot_frames) << " over " << tot_frames << " frames.";
+        << (tot_like / tot_frames) << " over " << tot_frames << " frames.";
 
     {
       Output ko(obj_wxfilename, binary);

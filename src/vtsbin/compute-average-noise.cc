@@ -18,7 +18,8 @@ int main(int argc, char* argv[]) {
 
     const char *usage =
         "Compute the average mean and covariance.\n"
-            "Usage: compute-average-noise [options] features-rspecifier per-utt-noise-rspecifier global-noise-wspecifier\n";
+        "Usage: compute-average-noise [options] features-rspecifier "
+        "per-utt-noise-rspecifier global-noise-wspecifier\n";
     ParseOptions po(usage);
     int32 num_static = 13;
 
@@ -32,8 +33,9 @@ int main(int argc, char* argv[]) {
       exit(1);
     }
 
-    std::string feature_rspecifier = po.GetArg(1), perutt_rspecifier =
-        po.GetArg(2), global_wspecifier = po.GetArg(3);
+    std::string feature_rspecifier = po.GetArg(1),
+        perutt_rspecifier = po.GetArg(2),
+        global_wspecifier = po.GetArg(3);
 
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     RandomAccessDoubleVectorReader noiseparams_reader(perutt_rspecifier);

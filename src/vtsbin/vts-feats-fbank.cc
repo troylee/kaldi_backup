@@ -25,25 +25,22 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "VTS feature compensation using Diagonal GMM-based model with given noise estimation.\n"
-            "Usage:  vts-feats-fbank [options] gmm-model-in noisy-mfcc-rspecifier noisy-fbank-rspecifier noiseparams-rspecifier"
-            " clean-features-wspecifier\n"
-            "Note: Features are FBank_E_D_A.\n";
+        "Usage:  vts-feats-fbank [options] gmm-model-in noisy-mfcc-rspecifier noisy-fbank-rspecifier noiseparams-rspecifier"
+        " clean-features-wspecifier\n"
+        "Note: Features are FBank_E_D_A.\n";
     DeltaFeaturesOptions opts;
     ParseOptions po(usage);
 
     bool have_energy = true;
-    po.Register(
-        "have-energy", &have_energy,
+    po.Register("have-energy", &have_energy,
         "Whether the feature has energy term, it will not be compensated");
 
     bool update_dynamic = true;
-    po.Register(
-        "update-dynamic",
-        &update_dynamic,
+    po.Register("update-dynamic", &update_dynamic,
         "Whether to update the dynamic parameters. If not, the noisy version will be used");
 
     int32 num_cepstral = 13;
-    int32 num_fbank = 40;
+    int32 num_fbank = 26;
     BaseFloat ceplifter = 22;
 
     po.Register("num-cepstral", &num_cepstral, "Number of Cepstral features");
@@ -61,10 +58,11 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string gmm_model_rxfilename = po.GetArg(1), noisy_mfcc_rspecifier = po
-        .GetArg(2), noisy_fbank_rspecifier = po.GetArg(3),
-        noiseparams_rspecifier = po.GetArg(4), clean_feature_wspecifier = po
-            .GetArg(5);
+    std::string gmm_model_rxfilename = po.GetArg(1),
+        noisy_mfcc_rspecifier = po.GetArg(2),
+        noisy_fbank_rspecifier = po.GetArg(3),
+        noiseparams_rspecifier = po.GetArg(4),
+        clean_feature_wspecifier = po.GetArg(5);
 
     // the clean speech GMM model
     DiagGmm clean_gmm;
@@ -75,8 +73,7 @@ int main(int argc, char *argv[]) {
     }
 
     SequentialBaseFloatMatrixReader noisy_mfcc_reader(noisy_mfcc_rspecifier);
-    RandomAccessBaseFloatMatrixReader noisy_fbank_reader(
-        noisy_fbank_rspecifier);
+    RandomAccessBaseFloatMatrixReader noisy_fbank_reader(noisy_fbank_rspecifier);
     RandomAccessDoubleVectorReader noiseparams_reader(noiseparams_rspecifier);
     BaseFloatMatrixWriter clean_feature_writer(clean_feature_wspecifier);
 
@@ -93,9 +90,7 @@ int main(int argc, char *argv[]) {
       Matrix<BaseFloat> noisy_mfcc(noisy_mfcc_reader.Value());
       noisy_mfcc_reader.FreeCurrent();
 
-      if (g_kaldi_verbose_level >= 1) {
-        KALDI_LOG<< "Current utterance: " << key;
-      }
+      KALDI_VLOG(1)<< "Current utterance: " << key;
 
       if (noisy_mfcc.NumRows() == 0) {
         KALDI_WARN<< "Zero-length utterance: " << key;
@@ -114,9 +109,9 @@ int main(int argc, char *argv[]) {
         KALDI_ERR<< "Current only support FBANK_D_A or FBANK_E_D_A!";
       }
 
-        /************************************************
-         Extract the noise parameters
-         *************************************************/
+      /************************************************
+       Extract the noise parameters
+       *************************************************/
 
       Vector<double> mfcc_mu_h(noiseparams_reader.Value(key + "_mu_h"));
       Vector<double> mfcc_mu_z(noiseparams_reader.Value(key + "_mu_z"));
@@ -173,8 +168,7 @@ int main(int argc, char *argv[]) {
       for (int32 gid = 0; gid < clean_gmm.NumGauss(); ++gid) {
 
         tmp_fbank.CopyFromVec(fbank_mu_z);  // n
-        tmp_fbank.AddMatVec(
-            -1.0, inv_dct_mat, kNoTrans,
+        tmp_fbank.AddMatVec(-1.0, inv_dct_mat, kNoTrans,
             SubVector<double>(clean_ngmm.means_.Row(gid), 0, num_cepstral), 1.0);  // n-x
         tmp_fbank.AddVec(-1.0, fbank_mu_h);  // n-x-h
 

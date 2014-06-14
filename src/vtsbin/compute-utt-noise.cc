@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
     typedef kaldi::int32 int32;
 
     const char *usage =
-        "Compute the mean and covariance per utterance and through out the whole bunch fo features.\n"
-            "Usage: compute-utt-stats [options] features-rspecifier per-utt-stats-wspecifier global-stats-wspecifier\n";
+        "Compute the mean and covariance per utterance and through out the whole bunch of features.\n"
+        "Usage: compute-utt-noise [options] features-rspecifier per-utt-stats-wspecifier global-stats-wspecifier\n";
     ParseOptions po(usage);
     int32 num_static = 13;
 
@@ -42,8 +42,9 @@ int main(int argc, char* argv[]) {
       exit(1);
     }
 
-    std::string feature_rspecifier = po.GetArg(1), perutt_wspecifier =
-        po.GetArg(2), global_wspecifier = po.GetArg(3);
+    std::string feature_rspecifier = po.GetArg(1),
+        perutt_wspecifier = po.GetArg(2),
+        global_wspecifier = po.GetArg(3);
 
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     DoubleVectorWriter perutt_writer(perutt_wspecifier);

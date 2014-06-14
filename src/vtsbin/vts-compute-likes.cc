@@ -23,8 +23,8 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Compute log-likelihoods from VTS compensated GMM-based model\n"
-            "(outputs matrices of log-likelihoods indexed by (frame, pdf)\n"
-            "Usage: gmm-compute-likes [options] model-in features-rspecifier noiseparams-rspecifier likes-wspecifier\n";
+        "(outputs matrices of log-likelihoods indexed by (frame, pdf)\n"
+        "Usage: gmm-compute-likes [options] model-in features-rspecifier noiseparams-rspecifier likes-wspecifier\n";
     ParseOptions po(usage);
 
     bool apply_log = true;
@@ -47,8 +47,9 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_in_filename = po.GetArg(1), feature_rspecifier =
-        po.GetArg(2), noiseparams_rspecifier = po.GetArg(3),
+    std::string model_in_filename = po.GetArg(1),
+        feature_rspecifier = po.GetArg(2),
+        noiseparams_rspecifier = po.GetArg(3),
         loglikes_wspecifier = po.GetArg(4);
 
     AmDiagGmm am_gmm;

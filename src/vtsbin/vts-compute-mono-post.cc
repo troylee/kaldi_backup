@@ -24,8 +24,9 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Compute monophone state log-posterior from triphone GMM-based model with 1st order VTS model compensation.\n"
-            "(outputs matrices of log-posteriors indexed by (frame, monophone-state)\n"
-            "Usage: vts-compute-mono-post [options] model-in mono2tri-matrix features-rspecifier noiseparams-rspecifier post-wspecifier\n";
+        "(outputs matrices of log-posteriors indexed by (frame, monophone-state)\n"
+        "Usage: vts-compute-mono-post [options] model-in mono2tri-matrix features-rspecifier noiseparams-rspecifier post-wspecifier\n";
+
     ParseOptions po(usage);
     int32 num_cepstral = 13;
     int32 num_fbank = 26;
@@ -46,9 +47,11 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_in_filename = po.GetArg(1), mono2tri_matrix_filename = po
-        .GetArg(2), feature_rspecifier = po.GetArg(3), noiseparams_rspecifier =
-        po.GetArg(4), loglikes_wspecifier = po.GetArg(5);
+    std::string model_in_filename = po.GetArg(1),
+        mono2tri_matrix_filename = po.GetArg(2),
+        feature_rspecifier = po.GetArg(3),
+        noiseparams_rspecifier = po.GetArg(4),
+        loglikes_wspecifier = po.GetArg(5);
 
     AmDiagGmm am_gmm;
     TransitionModel trans_model;  // not needed for computation, just in case to save the noisy model
@@ -166,7 +169,7 @@ int main(int argc, char *argv[]) {
         SubVector<BaseFloat> lp(logposts, i);
         BaseFloat offset = -lp.LogSumExp();
         lp.Add(offset);
-        if(!take_log)lp.ApplyExp();
+        if(!take_log) lp.ApplyExp();
         logposts.CopyRowFromVec(lp, i);
       }
       loglikes_writer.Write(key, logposts);
