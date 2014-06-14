@@ -21,14 +21,17 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Convert noise parameters from parameter kind MFCC to FBank\n"
-            "Usage: noise-mfc2fbk [options] noise-mfcc-rspecifier noise-fbank-wspecifier\n";
+        "Usage: noise-mfc2fbk [options] noise-mfcc-rspecifier noise-fbank-wspecifier\n";
 
     ParseOptions po(usage);
 
+    int32 delta_order = 2; // 0-static, 1-delta, 2-accelerate
     int32 num_cepstral = 13;
-    int32 num_fbank = 40;
+    int32 num_fbank = 26;
     BaseFloat ceplifter = 22;
 
+    po.Register("delta-order", &delta_order,
+                "The feature's delta order: [0-static, 1-delta, 2-accelerate]");
     po.Register("num-cepstral", &num_cepstral, "Number of Cepstral features");
     po.Register("num-fbank", &num_fbank,
                 "Number of FBanks used to generate the Cepstral features");
@@ -53,8 +56,8 @@ int main(int argc, char *argv[]) {
                       &inv_dct_mat);
 
     // compute the FBank noise estimate
-    Vector<double> mu(num_fbank * 3, kSetZero);
-    Vector<double> var(num_fbank * 3, kSetZero);
+    Vector<double> mu(num_fbank * (delta_order+1), kSetZero);
+    Vector<double> var(num_fbank * (delta_order+1), kSetZero);
     Matrix<double> tmp_mfcc(num_cepstral, num_cepstral), tmp_fbank(
                 num_fbank, num_fbank);
 
@@ -84,22 +87,33 @@ int main(int argc, char *argv[]) {
                                inv_dct_mat,
                                kTrans, 0.0);
         static_var.CopyDiagFromMat(tmp_fbank);
-        SubVector<double> delta_var(var, num_fbank, num_fbank);
-        tmp_mfcc.SetZero();
-        tmp_mfcc.CopyDiagFromVec(
-            SubVector<double>(feat, num_cepstral, num_cepstral));
-        tmp_fbank.AddMatMatMat(1.0, inv_dct_mat, kNoTrans, tmp_mfcc, kNoTrans,
-                               inv_dct_mat,
-                               kTrans, 0.0);
-        delta_var.CopyDiagFromMat(tmp_fbank);
-        SubVector<double> acc_var(var, num_fbank << 1, num_fbank);
-        tmp_mfcc.SetZero();
-        tmp_mfcc.CopyDiagFromVec(
-            SubVector<double>(feat, num_cepstral << 1, num_cepstral));
-        tmp_fbank.AddMatMatMat(1.0, inv_dct_mat, kNoTrans, tmp_mfcc, kNoTrans,
-                               inv_dct_mat,
-                               kTrans, 0.0);
-        acc_var.CopyDiagFromMat(tmp_fbank);
+
+        if (delta_order >= 1) {
+          SubVector<double> delta_var(var, num_fbank, num_fbank);
+          tmp_mfcc.SetZero();
+          tmp_mfcc.CopyDiagFromVec(
+              SubVector<double>(feat, num_cepstral, num_cepstral));
+          tmp_fbank.AddMatMatMat(1.0, inv_dct_mat, kNoTrans, tmp_mfcc, kNoTrans,
+                                 inv_dct_mat,
+                                 kTrans, 0.0);
+          delta_var.CopyDiagFromMat(tmp_fbank);
+
+          if (delta_order >= 2) {
+            SubVector<double> acc_var(var, num_fbank << 1, num_fbank);
+            tmp_mfcc.SetZero();
+            tmp_mfcc.CopyDiagFromVec(
+                SubVector<double>(feat, num_cepstral << 1, num_cepstral));
+            tmp_fbank.AddMatMatMat(1.0, inv_dct_mat, kNoTrans, tmp_mfcc,
+                                   kNoTrans,
+                                   inv_dct_mat,
+                                   kTrans, 0.0);
+            acc_var.CopyDiagFromMat(tmp_fbank);
+
+            if(delta_order > 2) {
+              KALDI_ERR << "Delta order higher than 2 is not supported yet!";
+            }
+          }
+        }
 
         fbank_writer.Write(key, var);
 

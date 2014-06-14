@@ -15,6 +15,7 @@
 #include "matrix/kaldi-matrix.h"
 #include "gmm/am-diag-gmm.h"
 #include "hmm/transition-model.h"
+#include "feat/feature-functions.h"
 
 namespace kaldi {
 
@@ -45,23 +46,6 @@ double KLDivergenceDiagGaussian(const Vector<double> &p_mean,
                                 const Vector<double> &p_var,
                                 const Vector<double> &q_mean,
                                 const Vector<double> &q_var);
-
-/*
- * Read and write a single biased linearity layer.
- *
- * The original biasedlinearity class in nnet, does not support direct access to the
- * weights.
- *
- */
-// read in the biasedlinearity layer
-bool ReadBiasedLinearityLayer(std::istream &is, bool binary,
-                              Matrix<BaseFloat> &linearity,
-                              Vector<BaseFloat> &bias);
-
-// write out the biasedlinearity layer
-void WriteBiasedLinearityLayer(std::ostream &os, bool binary,
-                               const Matrix<BaseFloat> &linearity,
-                               const Vector<BaseFloat> &bias);
 
 /*
  * Generate the DCT and inverse DCT transforms with/without the Cepstral liftering.

@@ -37,13 +37,12 @@ int main(int argc, char* argv[]) {
 
     po.Register("num-static", &num_static,
                 "Dimension of the static feature coefficients");
-    po.Register(
-        "noise-frames",
-        &noise_frames,
-        "Number of frames at the beginning and ending of each sentence used for noise estimation");
+    po.Register("noise-frames", &noise_frames,
+                "Number of frames at the beginning and ending "
+                "of each sentence used for noise estimation");
 
     po.Register("zero-mu-z-deltas", &zero_mu_z_deltas,
-                    "Constrain the deltas of additive noise to be 0s.");
+                "Constrain the deltas of additive noise to be 0s.");
 
     po.Read(argc, argv);
 
@@ -52,8 +51,8 @@ int main(int argc, char* argv[]) {
       exit(1);
     }
 
-    std::string feature_rspecifier = po.GetArg(1), noiseparams_wspecifier = po
-        .GetArg(2);
+    std::string feature_rspecifier = po.GetArg(1),
+        noiseparams_wspecifier = po.GetArg(2);
 
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     DoubleVectorWriter noiseparams_writer(noiseparams_wspecifier);
@@ -64,9 +63,7 @@ int main(int argc, char* argv[]) {
       Matrix<BaseFloat> features(feature_reader.Value());
       feature_reader.FreeCurrent();
 
-      if (g_kaldi_verbose_level >= 1) {
-        KALDI_LOG << "Current utterance: " << key;
-      }
+      KALDI_VLOG(1) << "Current utterance: " << key;
 
       if (features.NumRows() == 0) {
         KALDI_WARN << "Zero-length utterance: " << key;
@@ -80,8 +77,8 @@ int main(int argc, char* argv[]) {
       }
 
       int32 feat_dim = features.NumCols();
-      if (feat_dim != 39) {
-        KALDI_WARN << "Current feature dim is not 39!";
+      if (feat_dim != 3 * num_static) {
+        KALDI_WARN << "Current feature dim is not " << 3 * num_static << " !";
       }
 
       // noise model parameters, current estimate and last estimate

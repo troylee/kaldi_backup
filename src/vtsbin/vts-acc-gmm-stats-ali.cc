@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
         "Accumulate sufficient statistics for updating the pseudo-clean GMM model.\n"
             "Usage:  vts-acc-gmm-stats-ali [options] model-in features-rspecifier "
             "alignments-rspecifier noise-rspecifier accs-stats-wspecifier\n"
-            "Note: Features are MFCC_0_D_A, C0 is the last item.\n";
+            "Note: Features are MFCC_0_D_A in Kaldi format (i.e C0 is the first item).\n";
     ParseOptions po(usage);
 
     bool binary = true;
@@ -49,9 +49,11 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(
-        2), alignments_rspecifier = po.GetArg(3), noise_in_rspecifier = po
-        .GetArg(4), accs_wxfilename = po.GetArg(5);
+    std::string model_rxfilename = po.GetArg(1),
+        feature_rspecifier = po.GetArg(2),
+        alignments_rspecifier = po.GetArg(3),
+        noise_in_rspecifier = po.GetArg(4),
+        accs_wxfilename = po.GetArg(5);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -83,9 +85,7 @@ int main(int argc, char *argv[]) {
       Matrix<BaseFloat> features(feature_reader.Value());
       feature_reader.FreeCurrent();
 
-      if (g_kaldi_verbose_level >= 1) {
-        KALDI_LOG<< "Current utterance: " << key;
-      }
+      KALDI_VLOG(1)<< "Current utterance: " << key;
 
       if (features.NumRows() == 0) {
         KALDI_WARN<< "Zero-length utterance: " << key;
@@ -94,17 +94,18 @@ int main(int argc, char *argv[]) {
       }
 
       int32 feat_dim = features.NumCols();
-      if (feat_dim != 39) {
-        KALDI_ERR<< "Could not decode the features, only 39D MFCC_0_D_A is supported!";
+      if (feat_dim != 3 * num_cepstral) {
+        KALDI_ERR<< "Could not decode the features, "
+            << 3 * num_cepstral << "D MFCC_0_D_A is expected!";
       }
 
-        /************************************************
-         load alignment
-         *************************************************/
+      /************************************************
+       load alignment
+       *************************************************/
 
       if (!alignments_reader.HasKey(key)) {
-        KALDI_WARN<< "No alignment could be found for " << key
-        << ", utterance ignored.";
+        KALDI_WARN<< "No alignment could be found for "
+            << key << ", utterance ignored.";
         ++num_fail;
         continue;
       }
@@ -112,14 +113,14 @@ int main(int argc, char *argv[]) {
 
       if (alignment.size() != features.NumRows()) {
         KALDI_WARN<< "Alignments has wrong size " << (alignment.size())
-        << " vs. " << (features.NumRows());
+            << " vs. " << (features.NumRows());
         ++num_fail;
         continue;
       }
 
-        /************************************************
-         load parameters for VTS compensation
-         *************************************************/
+      /************************************************
+       load parameters for VTS compensation
+       *************************************************/
 
       if (!noiseparams_reader.HasKey(key + "_mu_h")
           || !noiseparams_reader.HasKey(key + "_mu_z")
@@ -146,8 +147,7 @@ int main(int argc, char *argv[]) {
       noise_am_gmm.CopyFromAmDiagGmm(am_gmm);
 
       CompensateModel(mu_h, mu_z, var_z, num_cepstral, num_fbank, dct_mat,
-                      inv_dct_mat,
-                      noise_am_gmm, Jx, Jz);
+                      inv_dct_mat, noise_am_gmm, Jx, Jz);
 
       /*
        * Accumulate statistics from the alignment
@@ -168,15 +168,16 @@ int main(int argc, char *argv[]) {
 
       if(num_success % 100 == 0){
         KALDI_LOG << "Done " << num_success << " files, log-like for " << key
-            << " is " << tot_like_this_file << " over " << features.NumRows() << " frames.";
+            << " is " << tot_like_this_file << " over "
+            << features.NumRows() << " frames.";
       }
 
     }
 
     KALDI_LOG<< "Done " << num_success << " utterances, failed for "
-    << num_fail;
+        << num_fail;
     KALDI_LOG<< "Overall log-likelihood per file is "
-    << (tot_like / num_success) << " over " << num_success << " files.";
+        << (tot_like / num_success) << " over " << num_success << " files.";
 
     {
       Output ko(accs_wxfilename, binary);

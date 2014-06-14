@@ -11,10 +11,10 @@
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
+#include "gmm/decodable-am-diag-gmm.h"
 #include "hmm/transition-model.h"
 #include "fstext/fstext-lib.h"
 #include "decoder/faster-decoder.h"
-#include "decoder/decodable-am-diag-gmm.h"
 #include "util/timer.h"
 #include "lat/kaldi-lattice.h" // for CompactLatticeArc
 #include "gmm/diag-gmm-normal.h"
@@ -80,10 +80,9 @@ int main(int argc, char *argv[]) {
     std::string word_syms_filename;
     FasterDecoderOptions decoder_opts;
     decoder_opts.Register(&po, true);  // true == include obscure settings.
-    po.Register(
-        "noise-frames",
-        &noise_frames,
-        "Number of frames at the begining and ending of each sentence used for noise estimation");
+    po.Register("noise-frames", &noise_frames,
+                "Number of frames at the begining and ending of"
+                " each sentence used for noise estimation");
     po.Register("num-cepstral", &num_cepstral, "Number of Cepstral features");
     po.Register("num-fbank", &num_fbank,
                 "Number of FBanks used to generate the Cepstral features");
@@ -91,15 +90,13 @@ int main(int argc, char *argv[]) {
                 "CepLifter value used for feature extraction");
     po.Register("em-iterations", &em_iterations,
                 "Number of iterations for EM.");
-    po.Register(
-        "noise-iterations", &noise_iterations,
-        "Number of iterations for noise parameter estimation in one EM step");
+    po.Register("noise-iterations", &noise_iterations,
+                "Number of iterations for noise parameter estimation in one EM step");
     po.Register("variance-lrate", &variance_lrate,
                 "Learning rate for additive noise diagonal covariance");
-    po.Register(
-        "max-noise-mean-magnitude",
-        &max_noise_mean_magnitude,
-        "Maximum magnitude value for the noise means (including both convolutional and additive noises)");
+    po.Register("max-noise-mean-magnitude", &max_noise_mean_magnitude,
+                "Maximum magnitude value for the noise means (including"
+                " both convolutional and additive noises)");
     po.Register("acoustic-scale", &acoustic_scale,
                 "Scaling factor for acoustic likelihoods");
     po.Register("word-symbol-table", &word_syms_filename,
@@ -113,10 +110,13 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_rxfilename = po.GetArg(1), fst_rxfilename = po.GetArg(2),
-        feature_rspecifier = po.GetArg(3), words_wspecifier = po.GetArg(4),
-        noiseparams_wspecifier = po.GetArg(5), alignment_wspecifier = po
-            .GetOptArg(6), lattice_wspecifier = po.GetOptArg(7);
+    std::string model_rxfilename = po.GetArg(1),
+        fst_rxfilename = po.GetArg(2),
+        feature_rspecifier = po.GetArg(3),
+        words_wspecifier = po.GetArg(4),
+        noiseparams_wspecifier = po.GetArg(5),
+        alignment_wspecifier = po.GetOptArg(6),
+        lattice_wspecifier = po.GetOptArg(7);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -134,10 +134,12 @@ int main(int argc, char *argv[]) {
     CompactLatticeWriter clat_writer(lattice_wspecifier);
 
     fst::SymbolTable *word_syms = NULL;
-    if (word_syms_filename != "")
-      if (!(word_syms = fst::SymbolTable::ReadText(word_syms_filename)))
+    if (word_syms_filename != "") {
+      if (!(word_syms = fst::SymbolTable::ReadText(word_syms_filename))) {
         KALDI_ERR << "Could not read symbol table from file "
             << word_syms_filename;
+      }
+    }
 
     SequentialBaseFloatMatrixReader feature_reader(feature_rspecifier);
     DoubleVectorWriter noiseparams_writer(noiseparams_wspecifier);
@@ -165,9 +167,7 @@ int main(int argc, char *argv[]) {
       Matrix<BaseFloat> features(feature_reader.Value());
       feature_reader.FreeCurrent();
 
-      if (g_kaldi_verbose_level >= 1) {
-        KALDI_LOG << "Current utterance: " << key;
-      }
+      KALDI_VLOG(1) << "Current utterance: " << key;
 
       if (features.NumRows() == 0) {
         KALDI_WARN << "Zero-length utterance: " << key;
@@ -181,9 +181,9 @@ int main(int argc, char *argv[]) {
       }
 
       int32 feat_dim = features.NumCols();
-      if (feat_dim != 39) {
-        KALDI_ERR
-            << "Could not decode the features, only 39D MFCC_0_D_A is supported!";
+      if (feat_dim != 3 * num_cepstral) {
+        KALDI_ERR << "Could not decode the features, "
+            << 3 * num_cepstral <<"D MFCC_0_D_A is expected!";
       }
 
       /************************************************
@@ -191,8 +191,8 @@ int main(int argc, char *argv[]) {
        *************************************************/
 
       // noise model parameters, current estimate and last estimate
-      Vector<double> mu_h(feat_dim), mu_z(feat_dim), var_z(feat_dim), mu_h0(
-          feat_dim), mu_z0(feat_dim), var_z0(feat_dim);
+      Vector<double> mu_h(feat_dim), mu_z(feat_dim), var_z(feat_dim),
+          mu_h0(feat_dim), mu_z0(feat_dim), var_z0(feat_dim);
 
       // saved parameters for noise model computation
       std::vector<Matrix<double> > Jx(am_gmm.NumGauss()), Jz(am_gmm.NumGauss());
@@ -204,7 +204,8 @@ int main(int argc, char *argv[]) {
        Estimate the initial noise parameters
        *************************************************/
 
-      EstimateInitialNoiseModel(features, feat_dim, num_cepstral, noise_frames, true, &mu_h, &mu_z,
+      EstimateInitialNoiseModel(features, feat_dim, num_cepstral,
+                                noise_frames, true, &mu_h, &mu_z,
                                 &var_z);
 
       if (g_kaldi_verbose_level >= 1) {
@@ -254,9 +255,10 @@ int main(int argc, char *argv[]) {
         fst::VectorFst<LatticeArc> decoded;  // linear FST.
         decoder.GetBestPath(&decoded);
 
-        if (!decoder.ReachedFinal())
+        if (!decoder.ReachedFinal()) {
           KALDI_ERR << "Decoder did not reach end-state, "
               << "noise model estimation is stopped!";
+        }
 
         std::vector<int32> alignment;
         std::vector<int32> words;
@@ -380,13 +382,15 @@ int main(int argc, char *argv[]) {
         GetLinearSymbolSequence(decoded, &alignment, &words, &weight);
 
         words_writer.Write(key, words);
-        if (alignment_writer.IsOpen())
+        if (alignment_writer.IsOpen()) {
           alignment_writer.Write(key, alignment);
+        }
 
         if (lattice_wspecifier != "") {
-          if (acoustic_scale != 0.0)  // We'll write the lattice without acoustic scaling
+          if (acoustic_scale != 0.0) {  // We'll write the lattice without acoustic scaling
             fst::ScaleLattice(fst::AcousticLatticeScale(1.0 / acoustic_scale),
                               &decoded);
+          }
           fst::VectorFst<CompactLatticeArc> clat;
           ConvertLattice(decoded, &clat, true);
           clat_writer.Write(key, clat);
@@ -396,8 +400,9 @@ int main(int argc, char *argv[]) {
           std::cerr << key << ' ';
           for (size_t i = 0; i < words.size(); i++) {
             std::string s = word_syms->Find(words[i]);
-            if (s == "")
+            if (s == "") {
               KALDI_ERR << "Word-id " << words[i] << " not in symbol table.";
+            }
             std::cerr << s << ' ';
           }
           std::cerr << '\n';

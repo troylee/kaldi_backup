@@ -11,12 +11,12 @@
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
+#include "gmm/decodable-am-diag-gmm.h"
 #include "hmm/transition-model.h"
 #include "hmm/hmm-utils.h"
 #include "fstext/fstext-lib.h"
 #include "decoder/faster-decoder.h"
 #include "decoder/training-graph-compiler.h"
-#include "decoder/decodable-am-diag-gmm.h"
 #include "lat/kaldi-lattice.h" // for {Compact}LatticeArc
 #include "vts/vts-first-order.h"
 
@@ -30,13 +30,13 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Align features given VTS compensated GMM-based models.\n"
-            "Usage:   vts-align-compiled [options] model-in graphs-rspecifier feature-rspecifier "
-            "noise-rspecifier alignments-wspecifier [<score-wspecifier>]\n"
-            "e.g.: \n"
-            " vts-align-compiled 1.mdl ark:graphs.fsts scp:train.scp ark:noise.ark ark:1.ali\n"
-            "or:\n"
-            " compile-train-graphs tree 1.mdl lex.fst ark:train.tra b, ark:- | \\\n"
-            "   vts-align-compiled 1.mdl ark:- scp:train.scp ark:noise.ark t, ark:1.ali\n";
+        "Usage:   vts-align-compiled [options] model-in graphs-rspecifier feature-rspecifier "
+        "noise-rspecifier alignments-wspecifier [<score-wspecifier>]\n"
+        "e.g.: \n"
+        " vts-align-compiled 1.mdl ark:graphs.fsts scp:train.scp ark:noise.ark ark:1.ali\n"
+        "or:\n"
+        " compile-train-graphs tree 1.mdl lex.fst ark:train.tra b, ark:- | \\\n"
+        "   vts-align-compiled 1.mdl ark:- scp:train.scp ark:noise.ark t, ark:1.ali\n";
 
     ParseOptions po(usage);
     bool binary = true;
@@ -57,10 +57,8 @@ int main(int argc, char *argv[]) {
                 "Transition-probability scale [relative to acoustics]");
     po.Register("acoustic-scale", &acoustic_scale,
                 "Scaling factor for acoustic likelihoods");
-    po.Register(
-        "self-loop-scale",
-        &self_loop_scale,
-        "Scale of self-loop versus non-self-loop log probs [relative to acoustics]");
+    po.Register("self-loop-scale", &self_loop_scale,
+                "Scale of self-loop versus non-self-loop log probs [relative to acoustics]");
     po.Register("num-cepstral", &num_cepstral, "Number of Cepstral features");
     po.Register("num-fbank", &num_fbank,
                 "Number of FBanks used to generate the Cepstral features");
@@ -72,9 +70,10 @@ int main(int argc, char *argv[]) {
       po.PrintUsage();
       exit(1);
     }
-    if (retry_beam != 0 && retry_beam <= beam)
+    if (retry_beam != 0 && retry_beam <= beam) {
       KALDI_WARN << "Beams do not make sense: beam " << beam << ", retry-beam "
           << retry_beam;
+    }
 
     FasterDecoderOptions decode_opts;
     decode_opts.beam = beam;  // Don't set the other options.
@@ -188,16 +187,14 @@ int main(int argc, char *argv[]) {
         decoder.Decode(&gmm_decodable);
 
         VectorFst<LatticeArc> decoded;  // linear FST.
-        bool ans = decoder.ReachedFinal()  // consider only final states.
-        && decoder.GetBestPath(&decoded);
+        bool ans = decoder.ReachedFinal() && decoder.GetBestPath(&decoded); // consider only final states.
         if (!ans && retry_beam != 0.0) {
           KALDI_WARN << "Retrying utterance " << key << " with beam "
               << retry_beam;
           decode_opts.beam = retry_beam;
           decoder.SetOptions(decode_opts);
           decoder.Decode(&gmm_decodable);
-          ans = decoder.ReachedFinal()  // consider only final states.
-          && decoder.GetBestPath(&decoded);
+          ans = decoder.ReachedFinal() && decoder.GetBestPath(&decoded); // consider only final states.
           decode_opts.beam = beam;
           decoder.SetOptions(decode_opts);
         }
@@ -211,8 +208,9 @@ int main(int argc, char *argv[]) {
           BaseFloat like = -(weight.Value1() + weight.Value2())
               / acoustic_scale;
           tot_like += like;
-          if (scores_writer.IsOpen())
+          if (scores_writer.IsOpen()) {
             scores_writer.Write(key, -(weight.Value1() + weight.Value2()));
+          }
           alignment_writer.Write(key, alignment);
           num_success++;
           if (num_success % 50 == 0) {

@@ -1,5 +1,5 @@
 /*
- * vts-est-noise.cc
+ * vts-est-global-noise.cc
  *
  *  Created on: Spet. 5, 2013
  *      Author: Troy Lee (troy.lee2008@gmail.com)
@@ -21,10 +21,10 @@
 #include "base/kaldi-common.h"
 #include "util/common-utils.h"
 #include "gmm/am-diag-gmm.h"
+#include "gmm/decodable-am-diag-gmm.h"
 #include "hmm/transition-model.h"
 #include "fstext/fstext-lib.h"
 #include "decoder/faster-decoder.h"
-#include "decoder/decodable-am-diag-gmm.h"
 #include "util/timer.h"
 #include "lat/kaldi-lattice.h" // for CompactLatticeArc
 #include "gmm/diag-gmm-normal.h"
@@ -38,9 +38,9 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Estimate a sest of global noise parameters for 1st-order VTS model compensation.\n"
-            "Usage:  vts-est-global-noise [options] model-in features-rspecifier "
-            "alignments-rspecifier noise-rspecifier noise-wspecifier\n"
-            "Note: Features are MFCC_0_D_A, C0 is the last item.\n";
+        "Usage:  vts-est-global-noise [options] model-in features-rspecifier "
+        "alignments-rspecifier noise-rspecifier noise-wspecifier\n"
+        "Note: Features are MFCC_0_D_A, C0 is the last item.\n";
     ParseOptions po(usage);
 
     int32 num_cepstral = 13;
@@ -58,10 +58,9 @@ int main(int argc, char *argv[]) {
 
     po.Register("variance-lrate", &variance_lrate,
                 "Learning rate for additive noise diagonal covariance");
-    po.Register(
-        "max-noise-mean-magnitude",
-        &max_noise_mean_magnitude,
-        "Maximum magnitude value for the noise means (including both convolutional and additive noises)");
+    po.Register("max-noise-mean-magnitude", &max_noise_mean_magnitude,
+        "Maximum magnitude value for the noise means (including both "
+        "convolutional and additive noises)");
 
     po.Read(argc, argv);
 
@@ -70,9 +69,11 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
-    std::string model_rxfilename = po.GetArg(1), feature_rspecifier = po.GetArg(
-        2), alignments_rspecifier = po.GetArg(3), noise_in_rspecifier = po
-        .GetArg(4), noise_out_wspecifier = po.GetArg(5);
+    std::string model_rxfilename = po.GetArg(1),
+        feature_rspecifier = po.GetArg(2),
+        alignments_rspecifier = po.GetArg(3),
+        noise_in_rspecifier = po.GetArg(4),
+        noise_out_wspecifier = po.GetArg(5);
 
     TransitionModel trans_model;
     AmDiagGmm am_gmm;
@@ -136,9 +137,7 @@ int main(int argc, char *argv[]) {
       Matrix<BaseFloat> features(feature_reader.Value());
       feature_reader.FreeCurrent();
 
-      if (g_kaldi_verbose_level >= 1) {
-        KALDI_LOG<< "Current utterance: " << key;
-      }
+      KALDI_VLOG(1)<< "Current utterance: " << key;
 
       if (features.NumRows() == 0) {
         KALDI_WARN<< "Zero-length utterance: " << key;
@@ -148,17 +147,17 @@ int main(int argc, char *argv[]) {
 
       int32 feat_dim = features.NumCols();
       if (feat_dim != num_cepstral * 3) {
-        KALDI_ERR
-            << "Could not decode the features, only " << num_cepstral*3 << "D MFCC_0_D_A is supported!";
-          }
+        KALDI_ERR << "Could not decode the features, "
+            << num_cepstral*3 << "D MFCC_0_D_A is expected!";
+      }
 
-        /************************************************
-         load alignment
-         *************************************************/
+      /************************************************
+       load alignment
+       *************************************************/
 
       if (!alignments_reader.HasKey(key)) {
-        KALDI_WARN<< "No alignment could be found for " << key
-        << ", utterance ignored.";
+        KALDI_WARN<< "No alignment could be found for "
+            << key << ", utterance ignored.";
         ++num_fail;
         continue;
       }
@@ -166,15 +165,15 @@ int main(int argc, char *argv[]) {
 
       if (alignment.size() != features.NumRows()) {
         KALDI_WARN<< "Alignments has wrong size " << (alignment.size())
-        << " vs. " << (features.NumRows());
+            << " vs. " << (features.NumRows());
         ++num_fail;
         continue;
       }
 
-        /*
-         * Convert alignment to state posterior, which will be used for Gaussian posterior
-         * computation.
-         */
+      /*
+       * Convert alignment to state posterior, which will be used for Gaussian posterior
+       * computation.
+       */
 
       BaseFloat tot_like_this_file = AccumulatePosteriorStatistics(noise_am_gmm,
                                                                    trans_model,
@@ -193,10 +192,10 @@ int main(int argc, char *argv[]) {
 
     }
 
-    KALDI_LOG<< "Statistic accumulation done " << num_success << " utterances, failed for "
-    << num_fail;
+    KALDI_LOG<< "Statistic accumulation done " << num_success
+        << " utterances, failed for " << num_fail;
     KALDI_LOG<< "Overall log-likelihood per file is "
-    << (old_like / num_success) << " over " << num_success << " files.";
+        << (old_like / num_success) << " over " << num_success << " files.";
 
     /*
      * Estimate noise means, mu_h, mu_z (only have static coefficients)
@@ -241,9 +240,7 @@ int main(int argc, char *argv[]) {
       Matrix<BaseFloat> features(feats.Value());
       feats.FreeCurrent();
 
-      if (g_kaldi_verbose_level >= 1) {
-        KALDI_LOG<< "Current utterance: " << key;
-      }
+      KALDI_VLOG(1)<< "Current utterance: " << key;
 
       if (features.NumRows() == 0) {
         KALDI_WARN<< "Zero-length utterance: " << key;
@@ -253,17 +250,17 @@ int main(int argc, char *argv[]) {
 
       int32 feat_dim = features.NumCols();
       if (feat_dim != num_cepstral * 3) {
-        KALDI_ERR
-            << "Could not decode the features, only " << num_cepstral*3 << "D MFCC_0_D_A is supported!";
-          }
+        KALDI_ERR << "Could not decode the features, "
+            << num_cepstral*3 << "D MFCC_0_D_A is expected!";
+      }
 
-        /************************************************
-         load alignment
-         *************************************************/
+      /************************************************
+       load alignment
+       *************************************************/
 
       if (!alignments_reader.HasKey(key)) {
-        KALDI_WARN<< "No alignment could be found for " << key
-        << ", utterance ignored.";
+        KALDI_WARN<< "No alignment could be found for "
+            << key << ", utterance ignored.";
         ++num_fail;
         continue;
       }
@@ -271,15 +268,15 @@ int main(int argc, char *argv[]) {
 
       if (alignment.size() != features.NumRows()) {
         KALDI_WARN<< "Alignments has wrong size " << (alignment.size())
-        << " vs. " << (features.NumRows());
+            << " vs. " << (features.NumRows());
         ++num_fail;
         continue;
       }
 
-        /*
-         * Convert alignment to state posterior, which will be used for Gaussian posterior
-         * computation.
-         */
+      /*
+       * Convert alignment to state posterior, which will be used for Gaussian posterior
+       * computation.
+       */
 
       BaseFloat tot_like_this_file = ComputeLogLikelihood(noise_am_gmm,
                                                           trans_model,
@@ -309,10 +306,10 @@ int main(int argc, char *argv[]) {
     noiseparams_writer.Write("global_mu_z", mu_z);
     noiseparams_writer.Write("global_var_z", var_z);
 
-    KALDI_LOG<< "Likelihood evaluation done " << num_success << " utterances, failed for "
-    << num_fail;
+    KALDI_LOG<< "Likelihood evaluation done " << num_success
+        << " utterances, failed for " << num_fail;
     KALDI_LOG<< "Overall log-likelihood increase per file is "
-    << (tot_update / num_success) << " over " << num_success << " files.";
+        << (tot_update / num_success) << " over " << num_success << " files.";
 
     return (num_success != 0 ? 0 : 1);
   } catch (const std::exception &e) {

@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
 
     const char *usage =
         "Append VTS noise estimation to the feature frames\n"
-            "Usage: feats-append-noise [options] feat-rspecifier noise-rspecifier out-wspecifier\n"
-            "Example: feats-append-noise ark:feats.ark ark:noise.ark ark:output.ark\n";
+        "Usage: feats-append-noise [options] feat-rspecifier noise-rspecifier out-wspecifier\n"
+        "Example: feats-append-noise ark:feats.ark ark:noise.ark ark:output.ark\n";
 
     ParseOptions po(usage);
 
