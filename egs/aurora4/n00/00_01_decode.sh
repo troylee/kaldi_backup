@@ -47,7 +47,7 @@ wait;
 local/average_wer.sh 'exp_clean/tri1a/decode/decode_bg_test*' | tee exp_clean/tri1a/decode/decode_bg_test.avgwer
 log_end "tri1a [decode]"
 }
-decode_clean_tri1a
+#decode_clean_tri1a
 
 
 decode_multi_tri1a(){
@@ -67,6 +67,7 @@ wait;
 local/average_wer.sh 'exp_multi/tri1a/decode/decode_bg_test*' | tee exp_multi/tri1a/decode/decode_bg_test.avgwer
 log_end "tri1a [decode]"
 }
+#decode_multi_tri1a
 
 decode_multi_tri2a(){
 # decode exp_multi/tri2a_dnn
@@ -85,6 +86,7 @@ wait;
 local/average_wer.sh --min-lmwt 9 --max-lmwt 20 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a_dnn/decode/decode_bg_test.avgwer
 log_end "tri2a [decode]"
 }
+decode_multi_tri2a
 
 decode_multi_tri2b(){
 # decode exp_multi/tri2b_dnn
@@ -103,3 +105,4 @@ wait;
 local/average_wer.sh --min-lmwt 9 --max-lmwt 20 'exp_multi/tri2b_dnn/decode/decode_bg_test*' | tee exp_multi/tri2b_dnn/decode/decode_bg_test.avgwer
 log_end "tri2b [decode]"
 }
+decode_multi_tri2b
