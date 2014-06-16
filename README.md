@@ -1,6 +1,6 @@
 ## README
 
-This repo was initially forked from the <a href="http://kaldi.sourceforge.net/">Kaldi</a> project (Revision: 3985). 
+This repo was initially forked from the <a href="http://kaldi.sourceforge.net/">Kaldi</a> project (Revision: 3985; Updated to 4060 on June 10). 
 
 The focus of this version would be the noise robustness in speech recognition and especially for the deep neural network based ASR systems. 
 

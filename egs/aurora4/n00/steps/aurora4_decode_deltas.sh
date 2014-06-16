@@ -20,6 +20,7 @@ scoring_opts=
 # note: there are no more min-lmwt and max-lmwt options, instead use
 # e.g. --scoring-opts "--min-lmwt 1 --max-lmwt 20"
 skip_scoring=false
+srcdir=
 # End configuration section.
 
 echo "$0 $@"  # Print the command line for logging
@@ -42,6 +43,7 @@ if [ $# != 3 ]; then
    echo "  --iter <iter>                                    # Iteration of model to test."
    echo "  --model <model>                                  # which model to use (e.g. to"
    echo "                                                   # specify the final.alimdl)"
+   echo "  --srcdir <dir>                                   # non default model file directory"
    echo "  --cmd (utils/run.pl|utils/queue.pl <queue opts>) # how to run jobs."
    echo "  --transform-dir <trans-dir>                      # dir to find fMLLR transforms "
    echo "  --acwt <float>                                   # acoustic scale used for lattice generation "
@@ -51,11 +53,10 @@ if [ $# != 3 ]; then
    exit 1;
 fi
 
-
 graphdir=$1
 data=$2
 dir=$3
-srcdir=`dirname $dir`; # The model directory is one level up from decoding directory.
+[ -z $srcdir ] && srcdir=`dirname $dir`; # Default model directory one level up from decoding directory.
 sdata=$data/split$nj;
 
 mkdir -p $dir/log

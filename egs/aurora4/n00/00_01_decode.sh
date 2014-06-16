@@ -36,17 +36,19 @@ log_start "tri1a [decode]"
 for i in {0..6} ; do 
   printf -v x 'test%02g' $((i+1))
   echo ${nodes[$i]} $x
-  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_decode_deltas.sh --nj 5 --model exp_clean/tri1a/final.mdl exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x}" ) &
+  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_decode_deltas.sh --nj 5 --srcdir exp_clean/tri1a exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x}" ) &
   
   printf -v x 'test%02g' $((i+8))
   echo ${nodes[$i]} $x
-  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_decode_deltas.sh --nj 5 --model exp_clean/tri1a/final.mdl exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x}" ) &
+  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_decode_deltas.sh --nj 5 --srcdir exp_clean/tri1a exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x}" ) &
 done
 wait;
 # write out the average WER results
 local/average_wer.sh 'exp_clean/tri1a/decode/decode_bg_test*' | tee exp_clean/tri1a/decode/decode_bg_test.avgwer
 log_end "tri1a [decode]"
 }
+#decode_clean_tri1a
+
 
 decode_multi_tri1a(){
 # decode exp_multi/tri1a
@@ -54,17 +56,18 @@ log_start "tri1a [decode]"
 for i in {0..6} ; do 
   printf -v x 'test%02g' $((i+1))
   echo ${nodes[$i]} $x
-  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_decode_deltas.sh --nj 5 --model exp_multi/tri1a/final.mdl exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x}" ) &
+  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_decode_deltas.sh --nj 5 --srcdir exp_multi/tri1a exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x}" ) &
   
   printf -v x 'test%02g' $((i+8))
   echo ${nodes[$i]} $x
-  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_decode_deltas.sh --nj 5 --model exp_multi/tri1a/final.mdl exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x}" ) &
+  ( ssh ${nodes[$i]} "cd $cwd; steps/aurora4_decode_deltas.sh --nj 5 --srcdir exp_multi/tri1a exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x}" ) &
 done
 wait;
 # write out the average WER results
 local/average_wer.sh 'exp_multi/tri1a/decode/decode_bg_test*' | tee exp_multi/tri1a/decode/decode_bg_test.avgwer
 log_end "tri1a [decode]"
 }
+#decode_multi_tri1a
 
 decode_multi_tri2a(){
 # decode exp_multi/tri2a_dnn
@@ -83,8 +86,9 @@ wait;
 local/average_wer.sh --min-lmwt 9 --max-lmwt 20 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a_dnn/decode/decode_bg_test.avgwer
 log_end "tri2a [decode]"
 }
+#decode_multi_tri2a
 
-#decode_multi_tri2b(){
+decode_multi_tri2b(){
 # decode exp_multi/tri2b_dnn
 log_start "tri2b [decode]"
 for i in {0..6} ; do
@@ -100,4 +104,5 @@ wait;
 # write out the average WER results
 local/average_wer.sh --min-lmwt 9 --max-lmwt 20 'exp_multi/tri2b_dnn/decode/decode_bg_test*' | tee exp_multi/tri2b_dnn/decode/decode_bg_test.avgwer
 log_end "tri2b [decode]"
-#}
+}
+#decode_multi_tri2b
