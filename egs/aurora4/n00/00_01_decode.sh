@@ -86,7 +86,7 @@ wait;
 local/average_wer.sh --min-lmwt 9 --max-lmwt 20 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a_dnn/decode/decode_bg_test.avgwer
 log_end "tri2a [decode]"
 }
-decode_multi_tri2a
+#decode_multi_tri2a
 
 decode_multi_tri2b(){
 # decode exp_multi/tri2b_dnn
@@ -105,4 +105,4 @@ wait;
 local/average_wer.sh --min-lmwt 9 --max-lmwt 20 'exp_multi/tri2b_dnn/decode/decode_bg_test*' | tee exp_multi/tri2b_dnn/decode/decode_bg_test.avgwer
 log_end "tri2b [decode]"
 }
-decode_multi_tri2b
+#decode_multi_tri2b
