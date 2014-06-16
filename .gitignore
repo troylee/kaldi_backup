@@ -666,7 +666,11 @@ tools/sph2pipe_v2.5/
 /src/util/text-utils-test
 /src/util/parse-options-test
 
+# /src/vts
+/src/vts/.depend.mk
+
 # /src/vtsbin
+/src/vtsbin/.depend.mk
 /src/vtsbin/compute-average-noise
 /src/vtsbin/compute-utt-noise
 /src/vtsbin/feats-append-noise
