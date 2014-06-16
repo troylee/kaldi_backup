@@ -82,8 +82,8 @@ for x in train_clean train_multi dev_clean dev_multi dev{01..14} test{01..14} ; 
 done
 log_end "FBank extraction"
 }
+#prepare_basic
 
-clean_train(){
 ###########################################
 # Model training - clean
 #
@@ -92,6 +92,7 @@ clean_train(){
 # for normal setups.  It doesn't always help. [it's to discourage non-silence
 # models from modeling silence.]
 
+train_clean_tri1a(){
 log_start "mono [train]"
 steps/aurora4_train_mono.sh --boost-silence 1.25 --nj 4 --norm_vars true \
   feat/mfcc/train_clean data/lang exp_clean/mono || exit 1;
@@ -109,17 +110,21 @@ log_end "tri1a [train]"
 
 log_start "tri1a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_clean/tri1a exp_clean/tri1a/graph_bg || exit 1;
+}
+#train_clean_tri1a
+
+decode_clean_tri1a(){
 # some system works well will {01..14}, but some will remove the starting 0s.
 for i in `seq -f "%02g" 1 14`; do
   x=test${i}
-  steps/aurora4_decode_deltas.sh --nj 4 --model exp_clean/tri1a/final.mdl exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x} || exit 1;
+  steps/aurora4_decode_deltas.sh --nj 4 --srcdir exp_clean/tri1a exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x} || exit 1;
 done
 # write out the average WER results
 local/average_wer.sh 'exp_clean/tri1a/decode/decode_bg_test*' | tee exp_clean/tri1a/decode/decode_bg_test.avgwer
 log_end "tri1a [decode]"
 }
+#decode_clean_tri1a
 
-multi_train(){
 ###########################################
 # Model training - multi
 #
@@ -128,6 +133,7 @@ multi_train(){
 # for normal setups.  It doesn't always help. [it's to discourage non-silence
 # models from modeling silence.]
 
+train_multi_tri1a(){
 log_start "mono [train]"
 steps/aurora4_train_mono.sh --boost-silence 1.25 --nj 4 --norm_vars true \
   feat/mfcc/train_multi data/lang exp_multi/mono || exit 1;
@@ -145,15 +151,21 @@ log_end "tri1a [train]"
 
 log_start "tri1a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri1a exp_multi/tri1a/graph_bg || exit 1;
+}
+#train_multi_tri1a
 
+decode_multi_tri1a(){
 for i in `seq -f "%02g" 1 14`; do
   x=test${i}
-  steps/aurora4_decode_deltas.sh --nj 4 --model exp_multi/tri1a/final.mdl exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x} || exit 1;
+  steps/aurora4_decode_deltas.sh --nj 4 --srcdir exp_multi/tri1a exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x} || exit 1;
 done
 # write out the average WER results
 local/average_wer.sh 'exp_multi/tri1a/decode/decode_bg_test*' | tee exp_multi/tri1a/decode/decode_bg_test.avgwer
 log_end "tri1a [decode]"
+}
+#decode_multi_tri1a
 
+align_multi_tri1a(){
 # align multi-style data with multi-trained model, needs a larger beam
 log_start "tri1a [align-train-multi]"
 steps/aurora4_align_si.sh --nj 4 --retry-beam 60 feat/mfcc/train_multi data/lang exp_multi/tri1a exp_multi/tri1a_ali/train_multi || exit 1;
@@ -190,10 +202,13 @@ done
 # sanity check for the genreated clean frame alignment
 ./utils/alignment_frame_checking.sh exp_multi/tri1a_ali/train_clean/ exp_multi/tri1a_ali/train_multi/
 ./utils/alignment_frame_checking.sh exp_multi/tri1a_ali/dev_clean/ exp_multi/tri1a_ali/dev_multi/
+}
+#align_multi_tri1a
 
 ###############################################
 #Now begin train DNN systems on multi data
 
+pretrain(){
 #RBM pretrain
 log_start "tri2a [pretrain]"
 dir=exp_multi/tri2a_dnn_pretrain
@@ -201,7 +216,9 @@ mkdir -p $dir/log
 steps/aurora4_pretrain_dbn.sh --nn-depth 7 --rbm-iter 3 --norm-vars true feat/fbank/train_multi $dir
 log_end "tri2a [pretrain]"
 }
+#pretrain
 
+train_tri2a(){
 # DNN fine-tuning with multi-style aligned labels
 log_start "tri2a [train]"
 dir=exp_multi/tri2a_dnn
@@ -215,16 +232,21 @@ log_end "tri2a [train]"
 
 log_start "tri2a [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg || exit 1;
+}
+#train_tri2a
 
+decode_tri2a(){
 for i in `seq -f "%02g" 1 14`; do
   x=test${i}
   steps/aurora4_nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg feat/fbank/${x} exp_multi/tri2a_dnn/decode/decode_bg_${x} || exit 1;
 done
 local/average_wer.sh 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a_dnn/decode/decode_bg_test.avgwer
 log_end "tri2a [decode]"
+}
+#decode_tri2a
 
-post(){
-# DNN fine-tuning with modified scheduler
+train_tri2b(){
+# DNN fine-tuning with clean aligned labels
 log_start "tri2b [train]"
 dir=exp_multi/tri2b_dnn
 ali=exp_multi/tri1a_ali/train_clean
@@ -237,14 +259,20 @@ log_end "tri2b [train]"
 
 log_start "tri2b [decode]"
 utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg || exit 1;
+}
+#train_tri2b
 
+decode_tri2b(){
 for i in `seq -f "%02g" 1 14`; do
   x=test${i}
   steps/aurora4_nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg feat/fbank/${x} exp_multi/tri2b_dnn/decode/decode_bg_${x} || exit 1;
 done
 local/average_wer.sh 'exp_multi/tri2b_dnn/decode/decode_bg_test*' | tee exp_multi/tri2b_dnn/decode/decode_bg_test.avgwer
 log_end "tri2b [decode]"
+}
+#decode_tri2b
 
+post(){
 # DNN fine-tuning with Dropout
 log_start "tri2c [train]"
 dir=exp_multi/tri2c_dnn
