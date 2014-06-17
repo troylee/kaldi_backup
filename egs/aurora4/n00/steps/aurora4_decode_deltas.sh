@@ -72,12 +72,15 @@ for f in $sdata/1/feats.scp $sdata/1/cmvn_0_d_a.utt.scp $model $graphdir/HCLG.fs
   [ ! -f $f ] && echo "decode.sh: no such file $f" && exit 1;
 done
 
-cmvn_opts=`cat $srcdir/cmvn_opts 2>/dev/null`
-
 thread_string=
 [ $num_threads -gt 1 ] && thread_string="-parallel --num-threads=$num_threads" 
 
-feats="ark,s,cs:add-deltas --delta-order=2 --delta-window=3 scp:$sdata/JOB/feats.scp ark:- | apply-cmvn $cmvn_opts scp:$sdata/JOB/cmvn_0_d_a.utt.scp ark:- ark:- |"
+feats="ark,s,cs:add-deltas --delta-order=2 --delta-window=3 scp:$sdata/JOB/feats.scp ark:- |"
+# add cmvn if exists
+if [ -f $srcdir/cmvn_opts ]; then
+  cmvn_opts=`cat $srcdir/cmvn_opts 2>/dev/null`
+  feats="$feats apply-cmvn $cmvn_opts scp:$sdata/JOB/cmvn_0_d_a.utt.scp ark:- ark:- |"
+fi
 
 if [ ! -z "$transform_dir" ]; then # add transforms to features...
   echo "Using fMLLR transforms from $transform_dir"
