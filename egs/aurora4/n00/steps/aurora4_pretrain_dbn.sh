@@ -114,6 +114,8 @@ cmvn=$data/cmvn_0_d_a.utt.scp
 echo "Will use CMVN statistics : $cmvn"
 feats="${feats} apply-cmvn --print-args=false --norm-vars=$norm_vars scp:$cmvn ark:- ark:- |"
 # splicing
+# keep track of splice option
+echo "$splice" > $dir/splice
 feats="${feats} splice-feats --left-context=${splice} --right-context=${splice} ark:- ark:- |"
 
 #get feature dim

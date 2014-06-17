@@ -98,7 +98,12 @@ if [ -f $srcdir/norm_vars ]; then
   feats="$feats apply-cmvn --norm-vars=$norm_vars scp:$sdata/JOB/cmvn_0_d_a.utt.scp ark:- ark:- |"
 fi
 # splicing 
-feats="$feats splice-feats --left-context=${splice} --right-context=${splice} ark:- ark:- |"
+if [ ! -z $splice ]; then
+	if [ -f $srcdir/splice ]; then
+		splice=$(cat $srcdir/splice 2>/dev/null)
+	fi 
+	feats="$feats splice-feats --left-context=${splice} --right-context=${splice} ark:- ark:- |"
+fi
 
 # Run the decoding in the queue
 if [ $stage -le 0 ]; then

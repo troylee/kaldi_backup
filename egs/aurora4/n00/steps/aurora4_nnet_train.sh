@@ -140,6 +140,7 @@ echo "$norm_vars" >$dir/norm_vars
 # Splicing:
 feats_tr="$feats_tr splice-feats --left-context=${splice} --right-context=${splice} ark:- ark:- |"
 feats_cv="$feats_cv splice-feats --left-context=${splice} --right-context=${splice} ark:- ark:- |"
+echo "${splice}" > $dir/splice
 
 # get feature dim
 echo "Getting feature dim : "
