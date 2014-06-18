@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
         "VTS model compensation and decoding using Diagonal GMM-based model with given noise estimation.\n"
             "Usage:  vts-noise-decode [options] model-in fst-in features-rspecifier noiseparams-rspecifier"
             " words-wspecifier [alignments-wspecifier [lattice-wspecifier]]\n"
-            "Note: lattices, if output, will just be linear sequences. Features are MFCC_0_D_A, C0 is the last item.\n";
+            "Note: lattices, if output, will just be linear sequences. Features are MFCC_0_D_A (kaldi format).\n";
     ParseOptions po(usage);
     bool allow_partial = true;
     BaseFloat acoustic_scale = 0.1;

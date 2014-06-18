@@ -678,8 +678,8 @@ tools/sph2pipe_v2.5/
 /src/vtsbin/noise-mfc2fbk
 /src/vtsbin/vts-acc-gmm-stats-ali
 /src/vtsbin/vts-align-compiled
-/src/vtsbin/vts-apply-global-cmvn
-/src/vtsbin/vts-apply-global-cmvn-fbank
+/src/vtsbin/vts-mvn-global
+/src/vtsbin/vts-mvn-global-fbank
 /src/vtsbin/vts-compute-likes
 /src/vtsbin/vts-compute-mono-post
 /src/vtsbin/vts-compute-obj
@@ -694,4 +694,5 @@ tools/sph2pipe_v2.5/
 /src/vtsbin/vts-init-noise
 /src/vtsbin/vts-model-decode
 /src/vtsbin/vts-noise-decode
+/src/vtsbin/vts-noise-latgen
 /src/vtsbin/vts-sum-obj
