@@ -8,11 +8,20 @@ Models trained using clean training data.
 
 1. 39D MFCC_0_D_A feature 
 2. Per-utterance CMVN
-3. Tiled triphone states
+3. Tied triphone states
 
 ```
 Avg.WER [lmwt=19] 34.6014 %
 ```
+
+### tri1b
+
+Single pass retrained from tri1a using features without CMVN.
+
+```
+Avg.WER [lmwt=15] 26.9182
+```
+
 
 ##exp_multi
 
@@ -22,10 +31,18 @@ Models trained using multi-style training data.
 
 1. 39D MFCC_0_D_A feature
 2. Per-utterance CMVN
-3. Tiled triphone states
+3. Tied triphone states
 
 ```
 Avg.WER [lmwt=17] 22.2465 %
+```
+
+### tri1b
+
+Single pass retrained from tri1a using features without CMVN.
+
+```
+Avg.WER [lmwt=18] 54.1712 %
 ```
 
 ### tri2a_dnn
@@ -47,5 +64,4 @@ Avg.WER [lmwt=13] 14.4472 %
 ```
 Avg.WER [lmwt=15] 13.8761 %
 ```
-
 
