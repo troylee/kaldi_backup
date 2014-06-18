@@ -9,7 +9,6 @@ feature_transform=  # non-default location of feature_transform (optional)
 model=              # non-default location of transition model (optional)
 class_frame_counts= # non-default location of PDF counts (optional)
 srcdir=             # non-default location of DNN-dir (decouples model dir from decode dir)
-splice=
 
 stage=0 # stage=1 skips lattice generation
 nj=4
@@ -99,8 +98,6 @@ fi
 # splicing 
 if [ -f $srcdir/splice ]; then
   splice=$(cat $srcdir/splice 2>/dev/null)
-fi 
-if [ ! -z $splice ]; then
   feats="$feats splice-feats --left-context=${splice} --right-context=${splice} ark:- ark:- |"
 fi
 
