@@ -86,6 +86,8 @@ loss_type=$(cat $dir/log/iter00.initial.log | grep "AvgLoss:" | tail -n 1 | awk 
 echo "CROSSVAL PRERUN AVG.LOSS $(printf "%.4f" $loss) $loss_type"
 
 # training
+halving=0
+[ -e $dir/.halving ] && halving=$(cat $dir/.halving)
 for iter in $(seq -w $max_iters); do
   echo -n "ITERATION $iter: "
   mlp_next=$dir/nnet/${mlp_base}_iter${iter}
@@ -149,8 +151,14 @@ for iter in $(seq -w $max_iters); do
     break
   fi
 
-  # do annealing when improvement is low
+  # start annealing when improvement is low
   if [ "1" == "$(awk "BEGIN{print(($loss_prev-$loss)/$loss_prev < $start_halving_impr)}")" ]; then
+    halving=1
+    echo $halving >$dir/.halving
+  fi
+
+  # do annealing
+  if [ "1" == "$halving" ]; then
     learn_rate=$(awk "BEGIN{print($learn_rate*$halving_factor)}")
     echo $learn_rate >$dir/.learn_rate
   fi
