@@ -73,6 +73,13 @@ class RbmBase : public Component {
     return rbm_opts_;
   }
   
+  virtual void GetWeight(Matrix<BaseFloat> *weight) = 0;
+  virtual void SetWeight(const Matrix<BaseFloat> &weight) = 0;
+  virtual void GetVisibleBias(Vector<BaseFloat> *bias) = 0;
+  virtual void SetVisibleBias(const Vector<BaseFloat> &bias) = 0;
+  virtual void GetHiddenBias(Vector<BaseFloat> *bias) = 0;
+  virtual void SetHiddenBias(const Vector<BaseFloat> &bias) = 0;
+
  protected:
   RbmTrainOptions rbm_opts_;
 
@@ -444,6 +451,30 @@ class Rbm : public RbmBase {
       WriteBasicType(os,binary,OutputDim());
     }
     if(!binary) os << "\n";
+  }
+
+  void GetWeight(Matrix<BaseFloat> *weight) {
+    vis_hid_.CopyToMat(weight);
+  }
+
+  void SetWeight(const Matrix<BaseFloat> &weight) {
+    vis_hid_.CopyFromMat(weight);
+  }
+
+  void GetVisibleBias(Vector<BaseFloat> *bias) {
+    vis_bias_.CopyToVec(bias);
+  }
+
+  void SetVisibleBias(const Vector<BaseFloat> &bias) {
+    vis_bias_.CopyFromVec(bias);
+  }
+
+  void GetHiddenBias(Vector<BaseFloat> *bias) {
+    hid_bias_.CopyToVec(bias);
+  }
+
+  void SetHiddenBias(const Vector<BaseFloat> &bias) {
+    hid_bias_.CopyFromVec(bias);
   }
 
 protected:
