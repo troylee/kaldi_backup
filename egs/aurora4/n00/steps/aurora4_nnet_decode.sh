@@ -14,8 +14,6 @@ stage=0 # stage=1 skips lattice generation
 nj=4
 cmd=run.pl
 
-splice=5
-
 acwt=0.10 # note: only really affects pruning (scoring is on lattices).
 beam=13.0
 latbeam=8.0
@@ -98,7 +96,10 @@ if [ -f $srcdir/norm_vars ]; then
   feats="$feats apply-cmvn --norm-vars=$norm_vars scp:$sdata/JOB/cmvn_0_d_a.utt.scp ark:- ark:- |"
 fi
 # splicing 
-feats="$feats splice-feats --left-context=${splice} --right-context=${splice} ark:- ark:- |"
+if [ -f $srcdir/splice ]; then
+  splice=$(cat $srcdir/splice 2>/dev/null)
+  feats="$feats splice-feats --left-context=${splice} --right-context=${splice} ark:- ark:- |"
+fi
 
 # Run the decoding in the queue
 if [ $stage -le 0 ]; then
