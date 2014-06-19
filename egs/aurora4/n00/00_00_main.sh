@@ -94,18 +94,18 @@ prepare_basic(){
 
 train_clean_tri1a(){
   log_start "mono [train]"
-  steps/aurora4_train_mono.sh --boost-silence 1.25 --nj 4 --norm_vars true \
+  steps/aurora4/train_mono.sh --boost-silence 1.25 --nj 4 --norm_vars true \
     feat/mfcc/train_clean data/lang exp_clean/mono || exit 1;
   log_end "mono [train]"
 
   log_start "mono [align]"
-  steps/aurora4_align_si.sh --boost-silence 1.25 --nj 4  \
+  steps/aurora4/align_si.sh --boost-silence 1.25 --nj 4  \
      feat/mfcc/train_clean data/lang exp_clean/mono exp_clean/mono_ali || exit 1;
   log_end "mono [align]"
 
   log_start "tri1a [train]"  
   # old params: 4200 35000
-  steps/aurora4_train_deltas.sh --boost-silence 1.25 --norm_vars true \
+  steps/aurora4/train_deltas.sh --boost-silence 1.25 --norm_vars true \
       4200 55000 feat/mfcc/train_clean data/lang exp_clean/mono_ali exp_clean/tri1a || exit 1;
   log_end "tri1a [train]"
 
@@ -118,7 +118,7 @@ decode_clean_tri1a(){
   # some system works well will {01..14}, but some will remove the starting 0s.
   for i in `seq -f "%02g" 1 14`; do
     x=test${i}
-    steps/aurora4_decode_deltas.sh --nj 4 --srcdir exp_clean/tri1a exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x} || exit 1;
+    steps/aurora4/decode_deltas.sh --nj 4 --srcdir exp_clean/tri1a exp_clean/tri1a/graph_bg feat/mfcc/${x} exp_clean/tri1a/decode/decode_bg_${x} || exit 1;
   done
   # write out the average WER results
   local/average_wer.sh 'exp_clean/tri1a/decode/decode_bg_test*' | tee exp_clean/tri1a/decode/decode_bg_test.avgwer
@@ -129,14 +129,14 @@ decode_clean_tri1a(){
 align_clean_tri1a(){
   # align clean data with clean-trained model
   log_start "tri1a [align-train]"
-  steps/aurora4_align_si.sh --nj 4 feat/mfcc/train_clean data/lang exp_clean/tri1a exp_clean/tri1a_ali/train_clean || exit 1;
+  steps/aurora4/align_si.sh --nj 4 feat/mfcc/train_clean data/lang exp_clean/tri1a exp_clean/tri1a_ali/train_clean || exit 1;
   log_end "tri1a [align-train]"
 }
 #align_clean_tri1a
 
 train_clean_spr_tri1b(){
   log_start "tri1b [train]"
-  steps/aurora4_singlepass_retrain.sh feat/mfcc/train_clean exp_clean/tri1a_ali/train_clean exp_clean/tri1b || exit 1;
+  steps/aurora4/singlepass_retrain.sh feat/mfcc/train_clean exp_clean/tri1a_ali/train_clean exp_clean/tri1b || exit 1;
   utils/mkgraph.sh data/lang_bcb05cnp exp_clean/tri1b exp_clean/tri1b/graph_bg || exit 1;
   log_end "tri1b [train]"
 }
@@ -152,17 +152,17 @@ train_clean_spr_tri1b(){
 
 train_multi_tri1a(){
   log_start "mono [train]"
-  steps/aurora4_train_mono.sh --boost-silence 1.25 --nj 4 --norm_vars true \
+  steps/aurora4/train_mono.sh --boost-silence 1.25 --nj 4 --norm_vars true \
     feat/mfcc/train_multi data/lang exp_multi/mono || exit 1;
   log_end "mono [train]"
 
   log_start "mono [align]"
-  steps/aurora4_align_si.sh --boost-silence 1.25 --nj 4  \
+  steps/aurora4/align_si.sh --boost-silence 1.25 --nj 4  \
      feat/mfcc/train_multi data/lang exp_multi/mono exp_multi/mono_ali || exit 1;
   log_end "mono [align]"
 
   log_start "tri1a [train]"
-  steps/aurora4_train_deltas.sh --boost-silence 1.25 --norm_vars true \
+  steps/aurora4/train_deltas.sh --boost-silence 1.25 --norm_vars true \
       4200 35000 feat/mfcc/train_multi data/lang exp_multi/mono_ali exp_multi/tri1a || exit 1;
   log_end "tri1a [train]"
 
@@ -174,7 +174,7 @@ train_multi_tri1a(){
 decode_multi_tri1a(){
   for i in `seq -f "%02g" 1 14`; do
     x=test${i}
-    steps/aurora4_decode_deltas.sh --nj 4 --srcdir exp_multi/tri1a exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x} || exit 1;
+    steps/aurora4/decode_deltas.sh --nj 4 --srcdir exp_multi/tri1a exp_multi/tri1a/graph_bg feat/mfcc/${x} exp_multi/tri1a/decode/decode_bg_${x} || exit 1;
   done
   # write out the average WER results
   local/average_wer.sh 'exp_multi/tri1a/decode/decode_bg_test*' | tee exp_multi/tri1a/decode/decode_bg_test.avgwer
@@ -185,20 +185,20 @@ decode_multi_tri1a(){
 align_multi_tri1a(){
   # align multi-style data with multi-trained model, needs a larger beam
   log_start "tri1a [align-train-multi]"
-  steps/aurora4_align_si.sh --nj 4 --retry-beam 60 feat/mfcc/train_multi data/lang exp_multi/tri1a exp_multi/tri1a_ali/train_multi || exit 1;
+  steps/aurora4/align_si.sh --nj 4 --retry-beam 60 feat/mfcc/train_multi data/lang exp_multi/tri1a exp_multi/tri1a_ali/train_multi || exit 1;
   log_end "tri1a [align-train-multi]"
 
   log_start "tri1a [align-dev-multi]"
-  steps/aurora4_align_si.sh --nj 4 --retry-beam 80 feat/mfcc/dev_multi data/lang exp_multi/tri1a exp_multi/tri1a_ali/dev_multi || exit 1;
+  steps/aurora4/align_si.sh --nj 4 --retry-beam 80 feat/mfcc/dev_multi data/lang exp_multi/tri1a exp_multi/tri1a_ali/dev_multi || exit 1;
   log_end "tri1a [align-dev-multi]"
 
   # align clean data with multi-trained model
   log_start "tri1a [align-train-clean]"
-  steps/aurora4_align_si.sh --nj 4 feat/mfcc/train_clean data/lang exp_multi/tri1a exp_multi/tri1a_ali/train_clean || exit 1;
+  steps/aurora4/align_si.sh --nj 4 feat/mfcc/train_clean data/lang exp_multi/tri1a exp_multi/tri1a_ali/train_clean || exit 1;
   log_end "tri1a [align-train-clean]"
 
   log_start "tri1a [align-dev-clean]"
-  steps/aurora4_align_si.sh --nj 4 feat/mfcc/dev_clean data/lang exp_multi/tri1a exp_multi/tri1a_ali/dev_clean || exit 1;
+  steps/aurora4/align_si.sh --nj 4 feat/mfcc/dev_clean data/lang exp_multi/tri1a exp_multi/tri1a_ali/dev_clean || exit 1;
   log_end "tri1a [align-dev-clean]"
 
   # additional processing of the clean data alignments for used as multi labels
@@ -224,7 +224,7 @@ align_multi_tri1a(){
 
 train_multi_spr_tri1b(){
   log_start "tri1b [train]"
-  steps/aurora4_singlepass_retrain.sh feat/mfcc/train_multi exp_multi/tri1a_ali/train_multi exp_multi/tri1b || exit 1;
+  steps/aurora4/singlepass_retrain.sh feat/mfcc/train_multi exp_multi/tri1a_ali/train_multi exp_multi/tri1b || exit 1;
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri1b exp_multi/tri1b/graph_bg || exit 1;
   log_end "tri1b [train]"
 }
@@ -238,7 +238,7 @@ pretrain(){
   log_start "tri2a [pretrain]"
   dir=exp_multi/tri2a_dnn_pretrain
   mkdir -p $dir/log
-  steps/aurora4_pretrain_dbn.sh --nn-depth 7 --rbm-iter 3 --norm-vars true feat/fbank/train_multi $dir
+  steps/aurora4/pretrain_dbn.sh --nn-depth 7 --rbm-iter 3 --norm-vars true feat/fbank/train_multi $dir
   log_end "tri2a [pretrain]"
 }
 #pretrain
@@ -251,7 +251,7 @@ train_tri2a(){
   ali_dev=exp_multi/tri1a_ali/dev_multi
   dbn=exp_multi/tri2a_dnn_pretrain/7.dbn
   mkdir -p $dir/log
-  steps/aurora4_nnet_train.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  steps/aurora4/nnet_train.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
     feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
   log_end "tri2a [train]"
 
@@ -263,7 +263,7 @@ train_tri2a(){
 decode_tri2a(){
   for i in `seq -f "%02g" 1 14`; do
     x=test${i}
-    steps/aurora4_nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg feat/fbank/${x} exp_multi/tri2a_dnn/decode/decode_bg_${x} || exit 1;
+    steps/aurora4/nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2a_dnn exp_multi/tri2a_dnn/graph_bg feat/fbank/${x} exp_multi/tri2a_dnn/decode/decode_bg_${x} || exit 1;
   done
   local/average_wer.sh 'exp_multi/tri2a_dnn/decode/decode_bg_test*' | tee exp_multi/tri2a_dnn/decode/decode_bg_test.avgwer
   log_end "tri2a [decode]"
@@ -273,11 +273,11 @@ decode_tri2a(){
 align_tri2a(){
   #nnet realignments
   log_start "tri2a [realign-train_multi]"
-  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri2a_dnn exp_multi/tri2a_dnn_ali/train_multi || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri2a_dnn exp_multi/tri2a_dnn_ali/train_multi || exit 1;
   log_end "tri2a [realign-train_multi]"
 
   log_start "tri2a [realign-dev_multi]"
-  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri2a_dnn exp_multi/tri2a_dnn_ali/dev_multi || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri2a_dnn exp_multi/tri2a_dnn_ali/dev_multi || exit 1;
   log_end "tri2a [realign-dev_multi]"
 }
 #align_tri2a
@@ -290,7 +290,7 @@ train_tri3a(){
   ali_dev=exp_multi/tri2a_dnn_ali/dev_multi
   mlp_init=exp_multi/tri2a_dnn/nnet_7.dbn_dnn.init
   mkdir -p $dir/log
-  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  steps/aurora4/nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
     feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3a_dnn exp_multi/tri3a_dnn/graph_bg || exit 1;
   log_end "tri3a [train]"
@@ -300,11 +300,11 @@ train_tri3a(){
 align_tri3a(){
   #nnet realignments
   log_start "tri3a [realign-train_multi]"
-  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri3a_dnn exp_multi/tri3a_dnn_ali/train_multi || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri3a_dnn exp_multi/tri3a_dnn_ali/train_multi || exit 1;
   log_end "tri3a [realign-train_multi]"
 
   log_start "tri3a [realign-dev_multi]"
-  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri3a_dnn exp_multi/tri3a_dnn_ali/dev_multi || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri3a_dnn exp_multi/tri3a_dnn_ali/dev_multi || exit 1;
   log_end "tri3a [realign-dev_multi]"
 }
 #align_tri3a
@@ -316,7 +316,7 @@ train_tri4a(){
   ali_dev=exp_multi/tri3a_dnn_ali/dev_multi
   mlp_init=exp_multi/tri2a_dnn/nnet_7.dbn_dnn.init
   mkdir -p $dir/log
-  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  steps/aurora4/nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
     feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri4a_dnn exp_multi/tri4a_dnn/graph_bg || exit 1;
   log_end "tri4a [train]"
@@ -326,11 +326,11 @@ train_tri4a(){
 align_tri4a(){
   #nnet realignments
   log_start "tri4a [realign-train_multi]"
-  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri4a_dnn exp_multi/tri4a_dnn_ali/train_multi || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri4a_dnn exp_multi/tri4a_dnn_ali/train_multi || exit 1;
   log_end "tri4a [realign-train_multi]"
 
   log_start "tri4a [realign-dev_multi]"
-  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri4a_dnn exp_multi/tri4a_dnn_ali/dev_multi || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri4a_dnn exp_multi/tri4a_dnn_ali/dev_multi || exit 1;
   log_end "tri4a [realign-dev_multi]"
 }
 align_tri4a
@@ -342,7 +342,7 @@ train_tri5a(){
   ali_dev=exp_multi/tri4a_dnn_ali/dev_multi
   mlp_init=exp_multi/tri2a_dnn/nnet_7.dbn_dnn.init
   mkdir -p $dir/log
-  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  steps/aurora4/nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
     feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri5a_dnn exp_multi/tri5a_dnn/graph_bg || exit 1;
   log_end "tri5a [train]"
@@ -357,7 +357,7 @@ train_tri2b(){
   ali_dev=exp_multi/tri1a_ali/dev_clean
   dbn=exp_multi/tri2a_dnn_pretrain/7.dbn
   mkdir -p $dir/log
-  steps/aurora4_nnet_train.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  steps/aurora4/nnet_train.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
     feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
   log_end "tri2b [train]"
 
@@ -369,7 +369,7 @@ train_tri2b(){
 decode_tri2b(){
   for i in `seq -f "%02g" 1 14`; do
     x=test${i}
-    steps/aurora4_nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg feat/fbank/${x} exp_multi/tri2b_dnn/decode/decode_bg_${x} || exit 1;
+    steps/aurora4/nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri2b_dnn exp_multi/tri2b_dnn/graph_bg feat/fbank/${x} exp_multi/tri2b_dnn/decode/decode_bg_${x} || exit 1;
   done
   local/average_wer.sh 'exp_multi/tri2b_dnn/decode/decode_bg_test*' | tee exp_multi/tri2b_dnn/decode/decode_bg_test.avgwer
   log_end "tri2b [decode]"
@@ -379,11 +379,11 @@ decode_tri2b(){
 align_tri2b(){
   #nnet realignments
   log_start "tri2b [realign-train_clean]"
-  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/train_clean data/lang exp_multi/tri2b_dnn exp_multi/tri2b_dnn_ali/train_clean || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 feat/fbank/train_clean data/lang exp_multi/tri2b_dnn exp_multi/tri2b_dnn_ali/train_clean || exit 1;
   log_end "tri2b [realign-train_clean]"
 
   log_start "tri2b [realign-dev_clean]"
-  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/dev_clean data/lang exp_multi/tri2b_dnn exp_multi/tri2b_dnn_ali/dev_clean || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 feat/fbank/dev_clean data/lang exp_multi/tri2b_dnn exp_multi/tri2b_dnn_ali/dev_clean || exit 1;
   log_end "tri2b [realign-dev_clean]"
 
   # additional processing of the clean data alignments for used as multi labels
@@ -415,7 +415,7 @@ train_tri3b(){
   ali_dev=exp_multi/tri2b_dnn_ali/dev_clean
   mlp_init=exp_multi/tri2b_dnn/nnet_7.dbn_dnn.init
   mkdir -p $dir/log
-  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  steps/aurora4/nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
     feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3b_dnn exp_multi/tri3b_dnn/graph_bg || exit 1;
   log_end "tri3b [train]"
@@ -425,11 +425,11 @@ train_tri3b(){
 align_tri3b(){
   #nnet realignments
   log_start "tri3b [realign-train_clean]"
-  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/train_clean data/lang exp_multi/tri3b_dnn exp_multi/tri3b_dnn_ali/train_clean || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 feat/fbank/train_clean data/lang exp_multi/tri3b_dnn exp_multi/tri3b_dnn_ali/train_clean || exit 1;
   log_end "tri3b [realign-train_clean]"
 
   log_start "tri3b [realign-dev_clean]"
-  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/dev_clean data/lang exp_multi/tri3b_dnn exp_multi/tri3b_dnn_ali/dev_clean || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 feat/fbank/dev_clean data/lang exp_multi/tri3b_dnn exp_multi/tri3b_dnn_ali/dev_clean || exit 1;
   log_end "tri3b [realign-dev_clean]"
 
   # additional processing of the clean data alignments for used as multi labels
@@ -460,7 +460,7 @@ train_tri4b(){
   ali_dev=exp_multi/tri3b_dnn_ali/dev_clean
   mlp_init=exp_multi/tri2b_dnn/nnet_7.dbn_dnn.init
   mkdir -p $dir/log
-  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  steps/aurora4/nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
     feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri4b_dnn exp_multi/tri4b_dnn/graph_bg || exit 1;
   log_end "tri4b [train]"
@@ -470,11 +470,11 @@ train_tri4b(){
 align_tri4b(){
   #nnet realignments
   log_start "tri4b [realign-train_clean]"
-  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/train_clean data/lang exp_multi/tri4b_dnn exp_multi/tri4b_dnn_ali/train_clean || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 feat/fbank/train_clean data/lang exp_multi/tri4b_dnn exp_multi/tri4b_dnn_ali/train_clean || exit 1;
   log_end "tri4b [realign-train_clean]"
 
   log_start "tri4b [realign-dev_clean]"
-  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/dev_clean data/lang exp_multi/tri4b_dnn exp_multi/tri4b_dnn_ali/dev_clean || exit 1;
+  steps/aurora4/nnet_align.sh --nj 4 feat/fbank/dev_clean data/lang exp_multi/tri4b_dnn exp_multi/tri4b_dnn_ali/dev_clean || exit 1;
   log_end "tri4b [realign-dev_clean]"
 
   # additional processing of the clean data alignments for used as multi labels
@@ -505,7 +505,7 @@ train_tri5b(){
   ali_dev=exp_multi/tri4b_dnn_ali/dev_clean
   mlp_init=exp_multi/tri2b_dnn/nnet_7.dbn_dnn.init
   mkdir -p $dir/log
-  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+  steps/aurora4/nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
     feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri5b_dnn exp_multi/tri5b_dnn/graph_bg || exit 1;
   log_end "tri5b [train]"
@@ -520,7 +520,7 @@ post(){
   ali_dev=exp_multi/tri1a_ali/dev_clean
   dbn=exp_multi/tri2a_dnn_pretrain/7.dbn
   mkdir -p $dir/log
-  steps/aurora4_nnet_train_dropout.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.005 --use-gpu-id 0 \
+  steps/aurora4/nnet_train_dropout.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.005 --use-gpu-id 0 \
     feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
   log_end "tri2c [train]"
 }
