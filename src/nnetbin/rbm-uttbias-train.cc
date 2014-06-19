@@ -140,9 +140,9 @@ int main(int argc, char *argv[]) {
     Vector<BaseFloat> visbias(rbm.InputDim(), kSetZero),
         init_visbias(rbm.InputDim(), kSetZero),
         global_visbias(rbm.InputDim(), kSetZero),
-        hidbias(rbm.InputDim(), kSetZero),
-        init_hidbias(rbm.InputDim(), kSetZero),
-        global_hidbias(rbm.InputDim(), kSetZero);
+        hidbias(rbm.OutputDim(), kSetZero),
+        init_hidbias(rbm.OutputDim(), kSetZero),
+        global_hidbias(rbm.OutputDim(), kSetZero);
     // keep a copy of the original RBM weight matrix
     Matrix<BaseFloat> weight(rbm.OutputDim(), rbm.InputDim());
 
