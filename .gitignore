@@ -486,6 +486,8 @@ tools/sph2pipe_v2.5/
 /src/nnetbin/nnet-train-mpe-sequential
 /src/nnetbin/nnet-train-perutt
 /src/nnetbin/transf-to-nnet
+/src/nnetbin/rbm-uttbias-train
+/src/nnetbin/rbm-uttbias-forward
 
 # /src/nnet2/
 /src/nnet2/.depend.mk
