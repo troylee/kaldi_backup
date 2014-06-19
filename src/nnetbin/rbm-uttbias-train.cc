@@ -41,10 +41,10 @@ int main(int argc, char *argv[]) {
         "or it can subsample the training dataset (--drop-data)\n"
         "Usage:  rbm-uttbias-train [options] <model-in> <feature-rspecifier> \""
         "<visbias-[rspecifier|rxfilename]> <hidbias-[rspecifier|rxfilename]> "
-        "<model-out> <visbias-wspecifier> <hidbias-wspecifier>\n"
+        "<visbias-wspecifier> <hidbias-wspecifier> [<model-out>]\n"
         "e.g.: \n"
         " rbm-uttbias-train 1.rbm.init scp:train.scp ark:visbias1.ark ark:hidbias1.ark "
-        "1.rbm ark:visbias2.ark ark:hidbias2.ark \n";
+        "ark:visbias2.ark ark:hidbias2.ark 1.rbm \n";
 
     ParseOptions po(usage);
 
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
     bool with_bug = true; 
     po.Register("with-bug", &with_bug, "Apply bug which led to better results (set-initial-momentum-to-max)");
-    
+
     int32 num_iters = 1; 
     po.Register("num-iters", &num_iters, 
                 "Number of iterations (smaller datasets should have more iterations, "
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 
     po.Read(argc, argv);
 
-    if (po.NumArgs() != 7) {
+    if (po.NumArgs() != 6 && po.NumArgs() != 7) {
       po.PrintUsage();
       exit(1);
     }
@@ -85,9 +85,9 @@ int main(int argc, char *argv[]) {
         feature_rspecifier = po.GetArg(2),
         visbias_rspecifier_or_rxfilename = po.GetArg(3),
         hidbias_rspecifier_or_rxfilename = po.GetArg(4),
-        target_model_filename = po.GetArg(5),
-        visbias_wspecifier = po.GetArg(6),
-        hidbias_wspecifier = po.GetArg(7);
+        visbias_wspecifier = po.GetArg(5),
+        hidbias_wspecifier = po.GetArg(6),
+        target_model_filename = po.GetOptArg(7);
 
      
     using namespace kaldi;
@@ -163,15 +163,15 @@ int main(int argc, char *argv[]) {
     // newly estimated biases
     Vector<BaseFloat> new_visbias(rbm.InputDim()), new_hidbias(rbm.OutputDim());
 
+    // keep a copy of the original RBM weight matrix
+    Matrix<BaseFloat> weight(rbm.OutputDim(), rbm.InputDim());
+    rbm.GetWeight(&weight);
 
     Timer time;
     KALDI_LOG << "RBM TRAINING STARTED";
 
-    int32 iter = 1;
-    KALDI_LOG << "Iteration " << iter << "/" << num_iters;
-
-    int32 num_done = 0, num_other_error = 0;
-    for (int32 iter=1; iter <= num_iters ; ++iter) {
+    int32 num_done = 0, num_other_error = 0, iter = 1;
+    for (; iter <= num_iters ; ++iter) {
       KALDI_LOG << "Iteration " << iter << "/" << num_iters;
       feature_reader.Open(feature_rspecifier);
       for ( ; !feature_reader.Done(); feature_reader.Next()) {
@@ -208,6 +208,9 @@ int main(int argc, char *argv[]) {
         }
         rbm.SetVisibleBias(visbias);
         rbm.SetHiddenBias(hidbias);
+        if(target_model_filename==""){
+          rbm.SetWeight(weight);
+        }
 
         // push features to GPU
         feats.Resize(mat.NumRows(),mat.NumCols());
@@ -302,7 +305,9 @@ int main(int argc, char *argv[]) {
       feature_reader.Close();
     }
 
-    nnet.Write(target_model_filename, binary);
+    if(target_model_filename != "") {
+      nnet.Write(target_model_filename, binary);
+    }
     
     KALDI_LOG << "Done " << iter << " iterations, " << num_done << " files, "
               << "skipped " << num_other_error << " files. "
