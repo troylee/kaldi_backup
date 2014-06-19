@@ -39,12 +39,10 @@ int main(int argc, char *argv[]) {
         "Markov Chain Monte-Carlo.\n"
         "The tool can perform several iterations (--num-iters) "
         "or it can subsample the training dataset (--drop-data)\n"
-        "Usage:  rbm-uttbias-train [options] <model-in> <feature-rspecifier> \""
-        "<visbias-[rspecifier|rxfilename]> <hidbias-[rspecifier|rxfilename]> "
+        "Usage:  rbm-uttbias-train [options] <model-in> <feature-rspecifier> "
         "<visbias-wspecifier> <hidbias-wspecifier> [<model-out>]\n"
         "e.g.: \n"
-        " rbm-uttbias-train 1.rbm.init scp:train.scp ark:visbias1.ark ark:hidbias1.ark "
-        "ark:visbias2.ark ark:hidbias2.ark 1.rbm \n";
+        " rbm-uttbias-train 1.rbm.init scp:train.scp ark:visbias2.ark ark:hidbias2.ark 1.rbm \n";
 
     ParseOptions po(usage);
 
@@ -56,6 +54,9 @@ int main(int argc, char *argv[]) {
 
     bool with_bug = true; 
     po.Register("with-bug", &with_bug, "Apply bug which led to better results (set-initial-momentum-to-max)");
+
+    bool use_zero_init_bias = false;
+    po.Register("use-zero-init-bias", &use_zero_init_bias, "Use zero initial biases");
 
     int32 num_iters = 1; 
     po.Register("num-iters", &num_iters, 
@@ -76,18 +77,16 @@ int main(int argc, char *argv[]) {
 
     po.Read(argc, argv);
 
-    if (po.NumArgs() != 6 && po.NumArgs() != 7) {
+    if (po.NumArgs() != 4 && po.NumArgs() != 5) {
       po.PrintUsage();
       exit(1);
     }
 
     std::string model_filename = po.GetArg(1),
         feature_rspecifier = po.GetArg(2),
-        visbias_rspecifier_or_rxfilename = po.GetArg(3),
-        hidbias_rspecifier_or_rxfilename = po.GetArg(4),
-        visbias_wspecifier = po.GetArg(5),
-        hidbias_wspecifier = po.GetArg(6),
-        target_model_filename = po.GetOptArg(7);
+        visbias_wspecifier = po.GetArg(3),
+        hidbias_wspecifier = po.GetArg(4),
+        target_model_filename = po.GetOptArg(5);
 
      
     using namespace kaldi;
@@ -129,9 +128,6 @@ int main(int argc, char *argv[]) {
     SequentialBaseFloatMatrixReader feature_reader;
     RandomAccessBaseFloatVectorReader visbias_reader, hidbias_reader;
 
-    BaseFloatVectorWriter visbias_writer(visbias_wspecifier);
-    BaseFloatVectorWriter hidbias_writer(hidbias_wspecifier);
-
     CuRand<BaseFloat> cu_rand; // parallel random number generator
     Mse mse;
     
@@ -140,39 +136,46 @@ int main(int argc, char *argv[]) {
                         neg_vis, neg_hid;
     CuMatrix<BaseFloat> dummy_mse_mat;
 
-    // initial biases
-    Vector<BaseFloat> visbias(rbm.InputDim()), hidbias(rbm.OutputDim());
-    // process visible bias
-    if(ClassifyRspecifier(visbias_rspecifier_or_rxfilename, NULL, NULL)
-        != kNoRspecifier) {
-      visbias_reader.Open(visbias_rspecifier_or_rxfilename);
-    }else{
-      bool binary;
-      Input ki(visbias_rspecifier_or_rxfilename, &binary);
-      visbias.Read(ki.Stream(), binary);
-    }
-    // process hidden bias
-    if(ClassifyRspecifier(hidbias_rspecifier_or_rxfilename, NULL, NULL)
-        != kNoRspecifier) {
-      hidbias_reader.Open(hidbias_rspecifier_or_rxfilename);
-    }else{
-      bool binary;
-      Input ki(hidbias_rspecifier_or_rxfilename, &binary);
-      hidbias.Read(ki.Stream(), binary);
-    }
-    // newly estimated biases
-    Vector<BaseFloat> new_visbias(rbm.InputDim()), new_hidbias(rbm.OutputDim());
-
+    // biases
+    Vector<BaseFloat> visbias(rbm.InputDim(), kSetZero),
+        init_visbias(rbm.InputDim(), kSetZero),
+        global_visbias(rbm.InputDim(), kSetZero),
+        hidbias(rbm.InputDim(), kSetZero),
+        init_hidbias(rbm.InputDim(), kSetZero),
+        global_hidbias(rbm.InputDim(), kSetZero);
     // keep a copy of the original RBM weight matrix
     Matrix<BaseFloat> weight(rbm.OutputDim(), rbm.InputDim());
+
     rbm.GetWeight(&weight);
+    if(!use_zero_init_bias) {
+      rbm.GetVisibleBias(&init_visbias);
+      rbm.GetHiddenBias(&init_hidbias);
+    }
 
     Timer time;
     KALDI_LOG << "RBM TRAINING STARTED";
 
-    int32 num_done = 0, num_other_error = 0, iter = 1;
+    char buf[100];
+    int32 num_done = 0, num_other_error = 0, iter = 1, acc_utt = 0;
     for (; iter <= num_iters ; ++iter) {
       KALDI_LOG << "Iteration " << iter << "/" << num_iters;
+
+      if(iter > 1) {
+        // load previously estimated biases rather than the initial ones
+        sprintf(buf, ".%d", iter-1);
+        visbias_reader.Open(visbias_wspecifier+std::string(buf));
+        hidbias_reader.Open(hidbias_wspecifier+std::string(buf));
+      }
+
+      // output biases
+      if(iter != num_iters) {
+        sprintf(buf, ".%d", iter);
+      }else{
+        strcpy(buf, ""); // the last iteration will write to the specified output files
+      }
+      BaseFloatVectorWriter visbias_writer(visbias_wspecifier+std::string(buf));
+      BaseFloatVectorWriter hidbias_writer(hidbias_wspecifier+std::string(buf));
+
       feature_reader.Open(feature_rspecifier);
       for ( ; !feature_reader.Done(); feature_reader.Next()) {
         std::string utt = feature_reader.Key();
@@ -190,24 +193,27 @@ int main(int argc, char *argv[]) {
         // setup the RBM model
         if(visbias_reader.IsOpen()) {
           if(!visbias_reader.HasKey(utt)) {
-            KALDI_WARN << "Utterance " << utt <<": Skipped because no visbias found in "
-                << visbias_rspecifier_or_rxfilename << ".";
+            KALDI_WARN << "Utterance " << utt <<": Skipped because no visbias found.";
             num_other_error++;
             continue;
           }
           visbias.CopyFromVec(visbias_reader.Value(utt));
+        } else {
+          visbias.CopyFromVec(init_visbias);
         }
         if(hidbias_reader.IsOpen()) {
           if(!hidbias_reader.HasKey(utt)) {
-            KALDI_WARN << "Utterance " << utt <<": Skipped because no visbias found in "
-                << hidbias_rspecifier_or_rxfilename << ".";
+            KALDI_WARN << "Utterance " << utt <<": Skipped because no visbias found.";
             num_other_error++;
             continue;
           }
           hidbias.CopyFromVec(hidbias_reader.Value(utt));
+        } else {
+          hidbias.CopyFromVec(init_hidbias);
         }
         rbm.SetVisibleBias(visbias);
         rbm.SetHiddenBias(hidbias);
+
         if(target_model_filename==""){
           rbm.SetWeight(weight);
         }
@@ -261,10 +267,17 @@ int main(int argc, char *argv[]) {
         mse.Eval(neg_vis, pos_vis, &dummy_mse_mat);
 
         // write out the newly estimated biases
-        rbm.GetVisibleBias(&new_visbias);
-        rbm.GetHiddenBias(&new_hidbias);
-        visbias_writer.Write(utt, new_visbias);
-        hidbias_writer.Write(utt, new_hidbias);
+        rbm.GetVisibleBias(&visbias);
+        rbm.GetHiddenBias(&hidbias);
+        visbias_writer.Write(utt, visbias);
+        hidbias_writer.Write(utt, hidbias);
+
+        if (iter == num_iters) {
+          // accumulate global averaged biases in the last iteration
+          global_visbias.AddVec(1.0, visbias);
+          global_hidbias.AddVec(1.0, hidbias);
+          ++acc_utt;
+        }
 
         total_frames += num_frames;
 
@@ -300,12 +313,23 @@ int main(int argc, char *argv[]) {
                         << time_now/60 << " min; processed " << total_frames/time_now
                         << " frames per second.";
         }
-      }
-
+      } // feature_reader
       feature_reader.Close();
-    }
+      if(visbias_reader.IsOpen()){
+        visbias_reader.Close();
+      }
+      if(hidbias_reader.IsOpen()){
+        hidbias_reader.Close();
+      }
+    } // iter
 
     if(target_model_filename != "") {
+      global_visbias.Scale(1.0/acc_utt);
+      global_hidbias.Scale(1.0/acc_utt);
+
+      rbm.SetVisibleBias(global_visbias);
+      rbm.SetHiddenBias(global_hidbias);
+
       nnet.Write(target_model_filename, binary);
     }
     

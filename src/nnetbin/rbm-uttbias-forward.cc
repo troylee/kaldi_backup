@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
   try {
     const char *usage =
         "Forward through the RBM with utt dependent bias.\n"
-        "Usage:  rbm-uttbias-forward [options] <model-in> <feature-rspecifier> \""
+        "Usage:  rbm-uttbias-forward [options] <model-in> <feature-rspecifier> "
         "<hidbias-rspecifier> <act-wspecifier>\n"
         "e.g.: \n"
         " rbm-uttbias-forward 1.rbm scp:train.scp ark:hidbias1.ark ark:out.ark\n";
