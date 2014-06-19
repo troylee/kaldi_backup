@@ -103,7 +103,8 @@ train_clean_tri1a(){
      feat/mfcc/train_clean data/lang exp_clean/mono exp_clean/mono_ali || exit 1;
   log_end "mono [align]"
 
-  log_start "tri1a [train]"
+  log_start "tri1a [train]"  
+  # old params: 4200 35000
   steps/aurora4_train_deltas.sh --boost-silence 1.25 --norm_vars true \
       4200 55000 feat/mfcc/train_clean data/lang exp_clean/mono_ali exp_clean/tri1a || exit 1;
   log_end "tri1a [train]"
@@ -296,6 +297,58 @@ train_tri3a(){
 }
 #train_tri3a
 
+align_tri3a(){
+  #nnet realignments
+  log_start "tri3a [realign-train_multi]"
+  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri3a_dnn exp_multi/tri3a_dnn_ali/train_multi || exit 1;
+  log_end "tri3a [realign-train_multi]"
+
+  log_start "tri3a [realign-dev_multi]"
+  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri3a_dnn exp_multi/tri3a_dnn_ali/dev_multi || exit 1;
+  log_end "tri3a [realign-dev_multi]"
+}
+#align_tri3a
+
+train_tri4a(){
+  log_start "tri4a [train]"
+  dir=exp_multi/tri4a_dnn
+  ali=exp_multi/tri3a_dnn_ali/train_multi
+  ali_dev=exp_multi/tri3a_dnn_ali/dev_multi
+  mlp_init=exp_multi/tri2a_dnn/nnet_7.dbn_dnn.init
+  mkdir -p $dir/log
+  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+    feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+  utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri4a_dnn exp_multi/tri4a_dnn/graph_bg || exit 1;
+  log_end "tri4a [train]"
+}
+#train_tri4a
+
+align_tri4a(){
+  #nnet realignments
+  log_start "tri4a [realign-train_multi]"
+  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri4a_dnn exp_multi/tri4a_dnn_ali/train_multi || exit 1;
+  log_end "tri4a [realign-train_multi]"
+
+  log_start "tri4a [realign-dev_multi]"
+  steps/aurora4_nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri4a_dnn exp_multi/tri4a_dnn_ali/dev_multi || exit 1;
+  log_end "tri4a [realign-dev_multi]"
+}
+align_tri4a
+
+train_tri5a(){
+  log_start "tri5a [train]"
+  dir=exp_multi/tri5a_dnn
+  ali=exp_multi/tri4a_dnn_ali/train_multi
+  ali_dev=exp_multi/tri4a_dnn_ali/dev_multi
+  mlp_init=exp_multi/tri2a_dnn/nnet_7.dbn_dnn.init
+  mkdir -p $dir/log
+  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+    feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+  utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri5a_dnn exp_multi/tri5a_dnn/graph_bg || exit 1;
+  log_end "tri5a [train]"
+}
+train_tri5a
+
 train_tri2b(){
   # DNN fine-tuning with clean aligned labels
   log_start "tri2b [train]"
@@ -368,6 +421,96 @@ train_tri3b(){
   log_end "tri3b [train]"
 }
 #train_tri3b
+
+align_tri3b(){
+  #nnet realignments
+  log_start "tri3b [realign-train_clean]"
+  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/train_clean data/lang exp_multi/tri3b_dnn exp_multi/tri3b_dnn_ali/train_clean || exit 1;
+  log_end "tri3b [realign-train_clean]"
+
+  log_start "tri3b [realign-dev_clean]"
+  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/dev_clean data/lang exp_multi/tri3b_dnn exp_multi/tri3b_dnn_ali/dev_clean || exit 1;
+  log_end "tri3b [realign-dev_clean]"
+
+  # additional processing of the clean data alignments for used as multi labels
+  dir=exp_multi/tri3b_dnn_ali/train_clean
+  mkdir -p ${dir}/ori
+  for j in {1..4}; do
+    mv ${dir}/ali.${j}.gz ${dir}/ori/ali.${j}.gz
+    utils/convert_ali_names.py feat/mfcc/train_multi/feats.scp ${dir}/ori/ali.${j}.gz ${dir}/ali.${j}.gz
+  done
+
+  dir=exp_multi/tri3b_dnn_ali/dev_clean
+  mkdir -p ${dir}/ori
+  for j in {1..4}; do
+    mv ${dir}/ali.${j}.gz ${dir}/ori/ali.${j}.gz
+    utils/convert_ali_names.py feat/mfcc/dev_multi/feats.scp ${dir}/ori/ali.${j}.gz ${dir}/ali.${j}.gz
+  done
+
+  # sanity check for the genreated clean frame alignment
+  ./utils/alignment_frame_checking.sh exp_multi/tri3b_dnn_ali/train_clean/ exp_multi/tri1a_ali/train_multi/
+  ./utils/alignment_frame_checking.sh exp_multi/tri3b_dnn_ali/dev_clean/ exp_multi/tri1a_ali/dev_multi/
+}
+#align_tri3b
+
+train_tri4b(){
+  log_start "tri4b [train]"
+  dir=exp_multi/tri4b_dnn
+  ali=exp_multi/tri3b_dnn_ali/train_clean
+  ali_dev=exp_multi/tri3b_dnn_ali/dev_clean
+  mlp_init=exp_multi/tri2b_dnn/nnet_7.dbn_dnn.init
+  mkdir -p $dir/log
+  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+    feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+  utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri4b_dnn exp_multi/tri4b_dnn/graph_bg || exit 1;
+  log_end "tri4b [train]"
+}
+#train_tri4b
+
+align_tri4b(){
+  #nnet realignments
+  log_start "tri4b [realign-train_clean]"
+  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/train_clean data/lang exp_multi/tri4b_dnn exp_multi/tri4b_dnn_ali/train_clean || exit 1;
+  log_end "tri4b [realign-train_clean]"
+
+  log_start "tri4b [realign-dev_clean]"
+  steps/aurora4_nnet_align.sh --nj 4 feat/fbank/dev_clean data/lang exp_multi/tri4b_dnn exp_multi/tri4b_dnn_ali/dev_clean || exit 1;
+  log_end "tri4b [realign-dev_clean]"
+
+  # additional processing of the clean data alignments for used as multi labels
+  dir=exp_multi/tri4b_dnn_ali/train_clean
+  mkdir -p ${dir}/ori
+  for j in {1..4}; do
+    mv ${dir}/ali.${j}.gz ${dir}/ori/ali.${j}.gz
+    utils/convert_ali_names.py feat/mfcc/train_multi/feats.scp ${dir}/ori/ali.${j}.gz ${dir}/ali.${j}.gz
+  done
+
+  dir=exp_multi/tri4b_dnn_ali/dev_clean
+  mkdir -p ${dir}/ori
+  for j in {1..4}; do
+    mv ${dir}/ali.${j}.gz ${dir}/ori/ali.${j}.gz
+    utils/convert_ali_names.py feat/mfcc/dev_multi/feats.scp ${dir}/ori/ali.${j}.gz ${dir}/ali.${j}.gz
+  done
+
+  # sanity check for the genreated clean frame alignment
+  ./utils/alignment_frame_checking.sh exp_multi/tri4b_dnn_ali/train_clean/ exp_multi/tri1a_ali/train_multi/
+  ./utils/alignment_frame_checking.sh exp_multi/tri4b_dnn_ali/dev_clean/ exp_multi/tri1a_ali/dev_multi/
+}
+align_tri4b
+
+train_tri5b(){
+  log_start "tri5b [train]"
+  dir=exp_multi/tri5b_dnn
+  ali=exp_multi/tri4b_dnn_ali/train_clean
+  ali_dev=exp_multi/tri4b_dnn_ali/dev_clean
+  mlp_init=exp_multi/tri2b_dnn/nnet_7.dbn_dnn.init
+  mkdir -p $dir/log
+  steps/aurora4_nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+    feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+  utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri5b_dnn exp_multi/tri5b_dnn/graph_bg || exit 1;
+  log_end "tri5b [train]"
+}
+train_tri5b
 
 post(){
   # DNN fine-tuning with Dropout
