@@ -307,6 +307,7 @@ int main(int argc, char *argv[]) {
         }
 
         // report the speed
+        ++num_done;
         if (num_done % 5000 == 0) {
           double time_now = time.Elapsed();
           KALDI_VLOG(1) << "After " << num_done << " utterances: time elapsed = "

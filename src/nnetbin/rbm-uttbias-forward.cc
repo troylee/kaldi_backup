@@ -166,13 +166,13 @@ int main(int argc, char *argv[]) {
       act_writer.Write(feature_reader.Key(), acts_host);
 
       // progress log
+      num_done++;
       if (num_done % 100 == 0) {
         double time_now = time.Elapsed();
         KALDI_VLOG(1) << "After " << num_done << " utterances: time elapsed = "
                       << time_now/60 << " min; processed " << total_frames/time_now
                       << " frames per second.";
       }
-      num_done++;
       total_frames += mat.NumRows();
     }
 
