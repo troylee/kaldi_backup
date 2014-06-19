@@ -105,7 +105,7 @@ train_clean_tri1a(){
 
   log_start "tri1a [train]"
   steps/aurora4_train_deltas.sh --boost-silence 1.25 --norm_vars true \
-      4200 35000 feat/mfcc/train_clean data/lang exp_clean/mono_ali exp_clean/tri1a || exit 1;
+      4200 55000 feat/mfcc/train_clean data/lang exp_clean/mono_ali exp_clean/tri1a || exit 1;
   log_end "tri1a [train]"
 
   log_start "tri1a [decode]"
@@ -294,7 +294,7 @@ train_tri3a(){
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3a_dnn exp_multi/tri3a_dnn/graph_bg || exit 1;
   log_end "tri3a [train]"
 }
-train_tri3a
+#train_tri3a
 
 train_tri2b(){
   # DNN fine-tuning with clean aligned labels
@@ -367,7 +367,7 @@ train_tri3b(){
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3b_dnn exp_multi/tri3b_dnn/graph_bg || exit 1;
   log_end "tri3b [train]"
 }
-train_tri3b
+#train_tri3b
 
 post(){
   # DNN fine-tuning with Dropout
