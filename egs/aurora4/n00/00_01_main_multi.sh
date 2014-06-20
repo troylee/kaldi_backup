@@ -121,7 +121,7 @@ pretrain(){
   log_start "tri2a [pretrain]"
   dir=exp_multi/tri2a_dnn_pretrain
   mkdir -p $dir/log
-  steps/aurora4/pretrain_dbn.sh --nn-depth 7 --rbm-iter 3 --norm-vars true feat/fbank/train_multi $dir
+  steps/aurora4/pretrain_dbn.sh --nn-depth 7 --rbm-iter 20 --norm-vars true --splice 5 feat/fbank/train_multi $dir
   log_end "tri2a [pretrain]"
 }
 pretrain
