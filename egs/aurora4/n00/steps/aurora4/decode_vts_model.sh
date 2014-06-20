@@ -15,9 +15,13 @@ beam=30.0
 latbeam=9.0
 acwt=0.0625 # note: only really affects pruning (scoring is on lattices).
 
+num_fbank=26
+num_cepstral=13
+ceplifter=22
+
 variance_lr=1.0
 max_noise_mean_magnitude=1000.0
-noise_iterations=1
+noise_iterations=2
 em_iterations=8
 
 scoring_opts=
@@ -79,14 +83,24 @@ done
 # no cmvn or transformations for vts
 feats="ark,s,cs:add-deltas --delta-order=2 --delta-window=3 scp:$sdata/JOB/feats.scp ark:- |"
 
+# decoding for noise 
 if [ $stage -le 0 ]; then
-  $cmd $parallel_opts JOB=1:$nj $dir/log/decode.JOB.log \
+  $cmd JOB=1:$nj $dir/log/decode.JOB.log \
     vts-model-decode --variance-lrate=$variance_lr --max-noise-mean-magnitude=1000.0 \
     --noise-iterations=$noise_iterations --em-iterations=$em_iterations \
-    --max-active=$max_active --beam=$beam --lattice-beam=$latbeam \
+    --num-fbank=$num_fbank --num-cepstral=$num_cepstral --ceplifter=$ceplifter \
+    --max-active=$max_active --beam=$beam \
     --acoustic-scale=$acwt --allow-partial=true --word-symbol-table=$graphdir/words.txt \
-    $model $graphdir/HCLG.fst "$feats" ark,t:$dir/rec.JOB.tra ark,t:$dir/noise.JOB.ark \
-    ark,t:$dir/ali.JOB.ark "ark:|gzip -c > $dir/lat.JOB.gz" || exit 1;
+    $model $graphdir/HCLG.fst "$feats" ark,t:$dir/rec.JOB.tra ark,t:$dir/noise.JOB.ark || exit 1;
+fi
+
+# generate lattice
+if [ $stage -le 1 ]; then
+  $cmd JOB=1:$nj $dir/log/latgen.JOB.log \
+    vts-noise-latgen --max-active=$max_active --beam=$beam --lattice-beam=$latbeam \
+    --num-fbank=$num_fbank --num-cepstral=$num_cepstral --ceplifter=$ceplifter \
+    --acoustic-scale=$acwt --allow-partial=true --word-symbol-table=$graphdir/words.txt \
+    $model $graphdir/HCLG.fst "$feats" ark:$dir/noise.JOB.ark "ark:|gzip -c > $dir/lat.JOB.gz" || exit 1;
 fi
 
 if ! $skip_scoring ; then
@@ -96,5 +110,4 @@ if ! $skip_scoring ; then
 fi
 
 exit 0;
-
 

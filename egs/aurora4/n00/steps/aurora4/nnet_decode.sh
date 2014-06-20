@@ -25,7 +25,7 @@ skip_scoring=false
 scoring_opts="--min-lmwt 9 --max-lmwt 20"
 
 num_threads=1 # if >1, will use latgen-faster-parallel
-parallel_opts="-pe smp $((num_threads+1))" # use 2 CPUs (1 DNN-forward, 1 decoder)
+parallel_opts="" # use 2 CPUs (1 DNN-forward, 1 decoder)
 use_gpu="no" # yes|no|optionaly
 # End configuration section.
 

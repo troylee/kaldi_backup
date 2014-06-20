@@ -210,18 +210,25 @@ for depth in $(seq 2 $nn_depth); do
   nnet-initialize $RBM.proto $RBM.init 2>$dir/log/nnet-initialize.$depth.log || exit 1
   #pre-train
   echo "Pretraining '$RBM'"
-  rbm-train-cd1-frmshuff --learn-rate=$rbm_lrate --l2-penalty=$rbm_l2penalty \
-    --num-iters=$rbm_iter --drop-data=$rbm_drop_data --verbose=$verbose \
-    --feature-transform=$dir/$((depth-1)).dbn \
-    $rbm_extra_opts \
-    $RBM.init "$feats" $RBM 2>$dir/log/rbm.$depth.log || exit 1
+  if [ "$depth" == "2" ]; then
+    rbm-train-cd1-frmshuff --learn-rate=$rbm_lrate --l2-penalty=$rbm_l2penalty \
+      --num-iters=$rbm_iter --drop-data=$rbm_drop_data --verbose=$verbose \
+      $rbm_extra_opts \
+      $RBM.init "$feats" $RBM 2>$dir/log/rbm.$depth.log || exit 1
+  else  
+    rbm-train-cd1-frmshuff --learn-rate=$rbm_lrate --l2-penalty=$rbm_l2penalty \
+      --num-iters=$rbm_iter --drop-data=$rbm_drop_data --verbose=$verbose \
+      --feature-transform=$dir/$((depth-1)).dbn \
+      $rbm_extra_opts \
+      $RBM.init "$feats" $RBM 2>$dir/log/rbm.$depth.log || exit 1
+  fi
 
   #Create DBN stack
   if [ "$depth" == "2" ]; then
     rbm-convert-to-nnet --binary=true $RBM $dir/$depth.dbn
   else 
     rbm-convert-to-nnet --binary=true $RBM - | \
-    nnet-concat $dir/$((depth-1)).dbn - $dir/$depth.dbn
+    nnet-concat $dir/$((depth-1)).dbn - $dir/$depth.dbn    
   fi
 
 done
@@ -236,4 +243,5 @@ echo "Pre-training finished."
 
 sleep 3
 exit 0
+
 
