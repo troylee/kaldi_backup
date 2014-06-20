@@ -124,5 +124,112 @@ pretrain(){
   steps/aurora4/pretrain_dbn.sh --nn-depth 7 --rbm-iter 20 --norm-vars true --splice 5 feat/fbank/train_multi $dir
   log_end "tri2a [pretrain]"
 }
-pretrain
+#pretrain
+
+###############################################
+# DNN fine-tuning with multi-style aligned labels
+#
+
+train_tri3a(){
+  log_start "tri3a [train]"
+  dir=exp_multi/tri3a_dnn
+  ali=exp_multi/tri1a_ali/train_multi
+  ali_dev=exp_multi/tri1a_ali/dev_multi
+  dbn=exp_multi/tri2a_dnn_pretrain/7.dbn
+  mkdir -p $dir/log
+  steps/aurora4/nnet_train.sh --norm-vars true --dbn $dbn --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+    feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+  utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3a_dnn exp_multi/tri3a_dnn/graph_bg || exit 1;
+  log_end "tri3a [train]" 
+}
+#train_tri3a
+
+decode_tri3a(){
+  log_start "tri3a [decode]"
+  for i in `seq -f "%02g" 1 14`; do
+    x=test${i}
+    steps/aurora4/nnet_decode.sh --nj 4 --acwt 0.10 --config conf/decode_dnn.config --srcdir exp_multi/tri3a_dnn exp_multi/tri3a_dnn/graph_bg feat/fbank/${x} exp_multi/tri3a_dnn/decode/decode_bg_${x} || exit 1;
+  done
+  local/average_wer.sh 'exp_multi/tri3a_dnn/decode/decode_bg_test*' | tee exp_multi/tri3a_dnn/decode/decode_bg_test.avgwer
+  log_end "tri3a [decode]"
+}
+#decode_tri3a
+
+align_tri3a(){
+  #nnet realignments
+  log_start "tri3a [realign-train_multi]"
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri3a_dnn exp_multi/tri3a_dnn_ali/train_multi || exit 1;
+  log_end "tri3a [realign-train_multi]"
+
+  log_start "tri3a [realign-dev_multi]"
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri3a_dnn exp_multi/tri3a_dnn_ali/dev_multi || exit 1;
+  log_end "tri3a [realign-dev_multi]"
+}
+#align_tri3a
+
+train_tri3b(){
+  log_start "tri3b [train]"
+  dir=exp_multi/tri3b_dnn
+  ali=exp_multi/tri3a_dnn_ali/train_multi
+  ali_dev=exp_multi/tri3a_dnn_ali/dev_multi
+  mlp_init=exp_multi/tri3a_dnn/nnet_7.dbn_dnn.init
+  mkdir -p $dir/log
+  steps/aurora4/nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+    feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+  utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3b_dnn exp_multi/tri3b_dnn/graph_bg || exit 1;
+  log_end "tri3b [train]"
+}
+#train_tri3b
+
+align_tri3b(){
+  #nnet realignments
+  log_start "tri3b [realign-train_multi]"
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri3b_dnn exp_multi/tri3b_dnn_ali/train_multi || exit 1;
+  log_end "tri3b [realign-train_multi]"
+
+  log_start "tri3b [realign-dev_multi]"
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri3b_dnn exp_multi/tri3b_dnn_ali/dev_multi || exit 1;
+  log_end "tri3b [realign-dev_multi]"
+}
+#align_tri3b
+
+train_tri3c(){
+  log_start "tri3c [train]"
+  dir=exp_multi/tri3c_dnn
+  ali=exp_multi/tri3b_dnn_ali/train_multi
+  ali_dev=exp_multi/tri3b_dnn_ali/dev_multi
+  mlp_init=exp_multi/tri3a_dnn/nnet_7.dbn_dnn.init
+  mkdir -p $dir/log
+  steps/aurora4/nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+    feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+  utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3c_dnn exp_multi/tri3c_dnn/graph_bg || exit 1;
+  log_end "tri3c [train]"
+}
+#train_tri3c
+
+align_tri3c(){
+  #nnet realignments
+  log_start "tri3c [realign-train_multi]"
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 60 feat/fbank/train_multi data/lang exp_multi/tri3c_dnn exp_multi/tri3c_dnn_ali/train_multi || exit 1;
+  log_end "tri3c [realign-train_multi]"
+
+  log_start "tri3c [realign-dev_multi]"
+  steps/aurora4/nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri3c_dnn exp_multi/tri3c_dnn_ali/dev_multi || exit 1;
+  log_end "tri3c [realign-dev_multi]"
+}
+#align_tri3c
+
+train_tri3d(){
+  log_start "tri3d [train]"
+  dir=exp_multi/tri3d_dnn
+  ali=exp_multi/tri3c_dnn_ali/train_multi
+  ali_dev=exp_multi/tri3c_dnn_ali/dev_multi
+  mlp_init=exp_multi/tri3a_dnn/nnet_7.dbn_dnn.init
+  mkdir -p $dir/log
+  steps/aurora4/nnet_train.sh --norm-vars true --mlp-init $mlp_init --hid-layers 0 --learn-rate 0.008 --use-gpu-id 0 \
+    feat/fbank/train_multi feat/fbank/dev_multi data/lang $ali $ali_dev $dir || exit 1;
+  utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3d_dnn exp_multi/tri3d_dnn/graph_bg || exit 1;
+  log_end "tri3d [train]"
+}
+#train_tri3d
 
