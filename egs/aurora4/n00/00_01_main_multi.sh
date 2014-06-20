@@ -51,7 +51,7 @@ train_multi_tri1a(){
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri1a exp_multi/tri1a/graph_bg || exit 1;
   log_end "tri1a [train]"
 }
-train_multi_tri1a
+#train_multi_tri1a
 
 decode_multi_tri1a(){
   log_start "tri1a [decode]"
@@ -103,7 +103,7 @@ align_multi_tri1a(){
   ./utils/alignment_frame_checking.sh exp_multi/tri1a_ali/train_clean/ exp_multi/tri1a_ali/train_multi/
   ./utils/alignment_frame_checking.sh exp_multi/tri1a_ali/dev_clean/ exp_multi/tri1a_ali/dev_multi/
 }
-align_multi_tri1a
+#align_multi_tri1a
 
 train_multi_spr_tri1b(){
   log_start "tri1b [train]"
@@ -111,7 +111,7 @@ train_multi_spr_tri1b(){
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri1b exp_multi/tri1b/graph_bg || exit 1;
   log_end "tri1b [train]"
 }
-train_multi_spr_tri1b
+#train_multi_spr_tri1b
 
 ###############################################
 #Now begin train DNN systems on multi data
@@ -142,7 +142,7 @@ train_tri3a(){
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3a_dnn exp_multi/tri3a_dnn/graph_bg || exit 1;
   log_end "tri3a [train]" 
 }
-#train_tri3a
+train_tri3a
 
 decode_tri3a(){
   log_start "tri3a [decode]"
@@ -165,7 +165,7 @@ align_tri3a(){
   steps/aurora4/nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri3a_dnn exp_multi/tri3a_dnn_ali/dev_multi || exit 1;
   log_end "tri3a [realign-dev_multi]"
 }
-#align_tri3a
+align_tri3a
 
 train_tri3b(){
   log_start "tri3b [train]"
@@ -179,7 +179,7 @@ train_tri3b(){
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3b_dnn exp_multi/tri3b_dnn/graph_bg || exit 1;
   log_end "tri3b [train]"
 }
-#train_tri3b
+train_tri3b
 
 align_tri3b(){
   #nnet realignments
@@ -191,7 +191,7 @@ align_tri3b(){
   steps/aurora4/nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri3b_dnn exp_multi/tri3b_dnn_ali/dev_multi || exit 1;
   log_end "tri3b [realign-dev_multi]"
 }
-#align_tri3b
+align_tri3b
 
 train_tri3c(){
   log_start "tri3c [train]"
@@ -205,7 +205,7 @@ train_tri3c(){
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3c_dnn exp_multi/tri3c_dnn/graph_bg || exit 1;
   log_end "tri3c [train]"
 }
-#train_tri3c
+train_tri3c
 
 align_tri3c(){
   #nnet realignments
@@ -217,7 +217,7 @@ align_tri3c(){
   steps/aurora4/nnet_align.sh --nj 4 --retry-beam 80 feat/fbank/dev_multi data/lang exp_multi/tri3c_dnn exp_multi/tri3c_dnn_ali/dev_multi || exit 1;
   log_end "tri3c [realign-dev_multi]"
 }
-#align_tri3c
+align_tri3c
 
 train_tri3d(){
   log_start "tri3d [train]"
@@ -231,5 +231,5 @@ train_tri3d(){
   utils/mkgraph.sh data/lang_bcb05cnp exp_multi/tri3d_dnn exp_multi/tri3d_dnn/graph_bg || exit 1;
   log_end "tri3d [train]"
 }
-#train_tri3d
+train_tri3d
 
