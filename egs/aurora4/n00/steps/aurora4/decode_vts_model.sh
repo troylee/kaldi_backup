@@ -21,7 +21,7 @@ ceplifter=22
 
 variance_lr=1.0
 max_noise_mean_magnitude=1000.0
-noise_iterations=1
+noise_iterations=2
 em_iterations=8
 
 scoring_opts=
