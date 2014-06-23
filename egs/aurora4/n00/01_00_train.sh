@@ -36,9 +36,25 @@ rub_pretrain(){
   init=exp_multi/tri2a_dnn_pretrain/1.rbm
   dir=exp_multi/rub1a_dnn_pretrain
   mkdir -p $dir/log
-  steps/aurora4/rbmdnn/rbmuttbias_pretrain.sh --init-uttbias-rbm $init --uttbias-rbm-iter 20 --nn-depth 7 --rbm-iter 3 --norm-vars true --splice 5 feat/fbank/train_multi $dir
+  steps/aurora4/rbmdnn/rbmuttbias_pretrain.sh --init-uttbias-rbm $init --uttbias-rbm-iter 20 --nn-depth 7 --rbm-iter 10 --norm-vars true --splice 5 feat/fbank/train_multi $dir
   log_end "rub1a [pretrain]"
 }
-rub_pretrain
+#rub_pretrain
+
+rub_est_biases(){
+  log_start "rub1a [est biases]"
+  rbm=exp_multi/rub1a_dnn_pretrain/1.rbm
+  # dev_multi
+  steps/aurora4/rbmdnn/rbmuttbias_estbias.sh --num-iter 20 --srcdir exp_multi/rub1a_dnn_pretrain $rbm feat/fbank/dev_multi exp_multi/rub1a_dnn_pretrain/bias/dev_multi || exit 1;
+
+  # test
+  for i in `seq -f "%02g" 1 14`; do
+    x=test${i}
+    steps/aurora4/rbmdnn/rbmuttbias_estbias.sh --num-iter 20 --srcdir exp_multi/rub1a_dnn_pretrain $rbm feat/fbank/${x} exp_multi/rub1a_dnn_pretrain/bias/${x} || exit 1;
+  done
+  
+  log_end "rub1a [pretrain]"
+}
+rub_est_biases
 
 
