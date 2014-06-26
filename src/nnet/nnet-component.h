@@ -62,6 +62,7 @@ class Component {
 
     kTranform = 0x0400,
     kRbm,
+    kRbmNCode,
     kSplice,
     kCopy,
     kTranspose,
