@@ -182,9 +182,7 @@ int main(int argc, char *argv[]) {
         targets_randomizer.AddData(targets);
         weights_randomizer.AddData(weights);
         num_done++;
-        // end when randomizer full
-        if (feature_randomizer.IsFull()) break;
-      
+
         // report the speed
         if (num_done % 5000 == 0) {
           double time_now = time.Elapsed();
@@ -192,6 +190,9 @@ int main(int argc, char *argv[]) {
                         << time_now/60 << " min; processed " << total_frames/time_now
                         << " frames per second.";
         }
+
+        // end when randomizer full
+        if (feature_randomizer.IsFull()) break;
       }
 
       // randomize
