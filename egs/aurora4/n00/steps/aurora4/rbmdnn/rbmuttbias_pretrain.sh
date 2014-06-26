@@ -70,7 +70,7 @@ if [ $# != 2 ]; then
    echo "  --nn-depth <N>                   # number of RBM layers"
    echo "  --hid-dim <N>                    # number of hidden units per layer"
    echo "  --rbm-iter <N>                   # number of CD-1 iterations per layer"
-   echo "  --dbm-drop-data <float>          # probability of frame-dropping,"
+   echo "  --rbm-drop-data <float>          # probability of frame-dropping,"
    echo "                                   # can be used to subsample large datasets"
    echo "  --rbm-lrate <float>              # learning-rate for Bernoulli-Bernoulli RBMs"
    echo "  --rbm-lrate-low <float>          # learning-rate for Gaussian-Bernoulli RBM"
@@ -171,8 +171,8 @@ else
     --use-zero-init-bias=$uttbias_use_zbias $rbm_extra_opts \
     $RBM.init "$feats" ark:$visbias ark:$hidbias $RBM 2>$dir/log/rbm.$depth.log || exit 1
   # clean up the intermediate bias estimates
-  rm $dir/$depth.rbm_visbias.ark.[0-9]+
-  rm $dir/$depth.rbm_hidbias.ark.[0-9]+
+  rm $dir/$depth.rbm_visbias.ark.[0-9]*
+  rm $dir/$depth.rbm_hidbias.ark.[0-9]*
 fi
 
 # The RBM(uttbias) cannot be directly concated as other RBMs, directly forward

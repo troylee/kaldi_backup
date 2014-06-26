@@ -54,6 +54,7 @@ const struct Component::key_value Component::kMarkerMap[] = {
   { Component::kTanh,"<Tanh>" },
   { Component::kDropout,"<Dropout>" },
   { Component::kRbm,"<Rbm>" },
+  { Component::kRbmNCode, "<RbmNCode>" },
   { Component::kSplice,"<Splice>" },
   { Component::kCopy,"<Copy>" },
   { Component::kAddShift,"<AddShift>" },
@@ -122,6 +123,9 @@ Component* Component::NewComponentOfType(ComponentType comp_type,
       break;
     case Component::kRbm :
       ans = new Rbm(input_dim, output_dim);
+      break;
+    case Component::kRbmNCode :
+      ans = new RbmNCode(input_dim, output_dim):
       break;
     case Component::kSplice :
       ans = new Splice(input_dim, output_dim);
