@@ -14,7 +14,7 @@ momentum=0
 l1_penalty=0
 l2_penalty=0
 # data processing
-minibatch_size=256
+minibatch_size=128
 randomizer_size=32768
 randomizer_seed=777
 feature_transform=

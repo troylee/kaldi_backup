@@ -38,10 +38,10 @@ param_stddev=0.1 #init parameters in other RBMs
 rbm_iter=1            #number of pre-training epochs (Gaussian-Bernoulli RBM has 2x more)
 rbm_drop_data=0.0     #sample the training set, 1.0 drops all the data, 0.0 keeps all
 # pre-training opts
-rbm_lrate=0.4         #RBM learning rate
-rbm_lrate_low=0.01    #lower RBM learning rate (for Gaussian units)
+rbm_lrate=0.1         #RBM learning rate
+rbm_lrate_low=0.001    #lower RBM learning rate (for Gaussian units)
 rbm_l2penalty=0.0002  #L2 penalty (increases RBM-mixing rate)
-rbm_extra_opts=
+rbm_extra_opts="--minibatch-size=128"
 # data processing config
 # feature config
 feature_transform= # Optionally reuse feature processing front-end (override splice,etc.)

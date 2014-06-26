@@ -45,12 +45,12 @@ rub_est_biases(){
   log_start "rub1a [est biases]"
   rbm=exp_multi/rub1a_dnn_pretrain/1.rbm
   # dev_multi
-  steps/aurora4/rbmdnn/rbmuttbias_estbias.sh --num-iter 20 --srcdir exp_multi/rub1a_dnn_pretrain $rbm feat/fbank/dev_multi exp_multi/rub1a_dnn_pretrain/bias/dev_multi || exit 1;
+  steps/aurora4/rbmdnn/rbmuttbias_estbias.sh --num-iter 100 --srcdir exp_multi/rub1a_dnn_pretrain $rbm feat/fbank/dev_multi exp_multi/rub1a_dnn_pretrain/bias/dev_multi || exit 1;
 
   # test
   for i in `seq -f "%02g" 1 14`; do
     x=test${i}
-    steps/aurora4/rbmdnn/rbmuttbias_estbias.sh --num-iter 20 --srcdir exp_multi/rub1a_dnn_pretrain $rbm feat/fbank/${x} exp_multi/rub1a_dnn_pretrain/bias/${x} || exit 1;
+    steps/aurora4/rbmdnn/rbmuttbias_estbias.sh --num-iter 100 --srcdir exp_multi/rub1a_dnn_pretrain $rbm feat/fbank/${x} exp_multi/rub1a_dnn_pretrain/bias/${x} || exit 1;
   done
   
   log_end "rub1a [pretrain]"
